@@ -1,6 +1,6 @@
-# Nome do projeto
+# FunkoStore
 
-> Substitua este título e esta descrição pelas informações do seu projeto.
+> este site é uma loja que vende funkos pop 
 
 Descreva brevemente o objetivo da aplicação, o problema que ela resolve e o
 público ao qual se destina.
@@ -131,3 +131,9 @@ Desenvolvimento Web do Instituto Federal Catarinense — Campus Araquari.
 ## Licença
 
 Consulte os termos de utilização no arquivo [LICENSE](LICENSE).
+
+## Entidades
+
+Usuário: Armazenar os dados cadastrais dos clientes, permitindo que eles façam login para realizar e visualizar compras, além de atualizar suas próprias informações. 
+
+Pedido_Funko:  Registrar os Funko Pops específicos que foram comprados por um usuário, permitindo a listagem por ID e o cancelamento/exclusão da compra.
