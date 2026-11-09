@@ -77,13 +77,19 @@
       "email": "amanda.gomes@email.com"
     }
   ],
+
   "produtos": [
-    {
-      "id": "1",
-      "nome": "Funko Homem-Aranha",
-      "preco": 249.90,
-      "emEstoque": true
-    },
+   {
+  "id": 1,
+  "nome": "Spider-Man Funko Pop",
+  "personagem": "Homem-Aranha",
+  "descricao": "Funko Pop do personagem Homem-Aranha.",
+  "anoLancamento": 2023,
+  "preco": 129.90,
+  "imagem": "/images/spiderman.png",
+  "estoque": 10,
+  "categoriaId": 1
+},
     {
       "id": "2",
       "nome": "Funko Mob Psycho",
