@@ -77,6 +77,7 @@
       "email": "amanda.gomes@email.com"
     }
   ],
+<<<<<<< HEAD
 
   "produtos": [
    {
@@ -90,6 +91,15 @@
   "estoque": 10,
   "categoriaId": 1
 },
+=======
+  "Pedidos": [
+    {
+      "id": "1",
+      "nome": "Funko Homem-Aranha",
+      "preco": 249.90,
+      "emEstoque": true
+    },
+>>>>>>> ddf3c10 (alterado o readme)
     {
       "id": "2",
       "nome": "Funko Mob Psycho",

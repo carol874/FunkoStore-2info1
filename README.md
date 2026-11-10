@@ -135,6 +135,7 @@ Consulte os termos de utilização no arquivo [LICENSE](LICENSE).
 
 ## Entidades
 
+<<<<<<< HEAD
  ### 1 Usuário : Armazenar os dados cadastrais dos clientes, permitindo que eles façam login para realizar e visualizar compras, além de atualizar suas próprias informações. 
 
 Campos
@@ -395,5 +396,18 @@ Telas que utilizarão os endpoints
 
 
 
+=======
+Usuário: (Mariano)Armazenar os dados cadastrais dos clientes, permitindo que eles façam login para realizar e visualizar compras, além de atualizar suas próprias informações. 
+
+Pedido_Funko: (feliciano) Registrar os Funko Pops específicos que foram comprados por um usuário, permitindo a listagem por ID e o cancelamento/exclusão da compra.
+
+estoque: (Renato) sistema onde vai ficar estocados os produtos do site
+
+comentario:(comentario): sistema de criar comentarios em produdos e pedidos, para o cliente dar sua opinião
+
+pagamento:(carol): sistema de pagamento uma finalização da compra
+
+Categorias: (Marco): categorai onde vai estar dividido os produtos 
+>>>>>>> ddf3c10 (alterado o readme)
 
 
