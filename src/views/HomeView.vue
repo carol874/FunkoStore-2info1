@@ -1,5 +1,5 @@
 <script setup>
-// Página inicial do projeto.
+import FunkoCard from '@/components/layout/FunkoCard.vue';
 </script>
 
 <template>
@@ -16,6 +16,8 @@
       <p class="mb-0">
         Vue.js, Vue Router, Bootstrap e Bootstrap Icons estão funcionando.
       </p>
+
+      <FunkoCard/>
     </div>
   </main>
 </template>
