@@ -94,6 +94,7 @@ Consulte o [guia de estrutura do projeto](./docs/estrutura-projeto.md).
 
 - [Como utilizar o template](./docs/como-utilizar-template.md);
 - [Estrutura do projeto](./docs/estrutura-projeto.md);
+- [CRUD e endpoints de categorias](./docs/api-categorias.md);
 - [Guia de padronização do código](./docs/guia-padronizacao-codigo.md);
 - [Validação do projeto](./docs/validacao-template.md).
 
@@ -409,5 +410,4 @@ pagamento:(carol): sistema de pagamento uma finalização da compra
 
 Categorias: (Marco): categorai onde vai estar dividido os produtos 
 >>>>>>> ddf3c10 (alterado o readme)
-
 

@@ -47,6 +47,10 @@ import { RouterLink } from 'vue-router'
             Cadastre-se
           </RouterLink>
 
+          <RouterLink class="nav-link" to="/categorias">
+            Categorias
+          </RouterLink>
+
           <RouterLink class="nav-link" to="/pedidos">
            Meu carrinho
           </RouterLink>
