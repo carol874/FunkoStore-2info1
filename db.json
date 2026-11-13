@@ -77,7 +77,6 @@
       "email": "amanda.gomes@email.com"
     }
   ],
-<<<<<<< HEAD
 
   "categorias": [
     {
@@ -85,7 +84,7 @@
       "nome": "Geral",
       "descricao": "Categoria atual dos Funkos já cadastrados."
     }
-  ],
+  ],     
   "produtos": [
   {
     "id": 1,
@@ -996,7 +995,7 @@
       "preco": 249.90,
       "emEstoque": true
     },
->>>>>>> ddf3c10 (alterado o readme)
+
     {
       "id": "2",
       "nome": "Funko Mob Psycho",
