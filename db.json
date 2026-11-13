@@ -77,9 +77,16 @@
     }
   ],
 
+  "categorias": [
+    {
+      "id": 1,
+      "nome": "Geral",
+      "descricao": "Categoria atual dos Funkos já cadastrados."
+    }
+  ],     
   "produtos": [
 
-[
+
   {
     "id": 1,
     "nome": "Spider-Man Funko Pop",
@@ -980,8 +987,6 @@
     "Avaliações": "4.9",
     "categoriaId": 1
   }
-]
-
   ],
 
   "Pedidos": [
@@ -991,6 +996,7 @@
       "preco": 249.9,
       "emEstoque": true
     },
+
     {
       "id": "2",
       "nome": "Funko Mob Psycho",

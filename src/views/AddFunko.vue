@@ -1,14 +1,16 @@
 <script setup>
 import { ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
+import { API_URL, listarCategorias } from '@/services/categorias';
 
 const router = useRouter();
+const categorias = ref([]);
+const carregandoCategorias = ref(true);
 
 const API_URL = import.meta.env.DEV
   ? 'http://localhost:3000'
   : 'SUA_URL_DA_API';
 
-// Objeto reativo para o formulário
 const novoFunko = ref({
   nome: '',
   personagem: '',
@@ -19,13 +21,24 @@ const novoFunko = ref({
   preco: '',
   imagem: '',
   estoque: '',
-  vendas: 0, // Valor inicial padrão
+  vendas: 0, 
   Avaliações: '',
   categoriaId: '',
 });
 
 const mensagemErro = ref('');
 const salvando = ref(false);
+
+async function carregarCategorias() {
+  try {
+    categorias.value = await listarCategorias();
+  } catch (erro) {
+    console.error('Erro ao carregar categorias:', erro);
+    mensagemErro.value = erro.message || 'Não foi possível carregar as categorias.';
+  } finally {
+    carregandoCategorias.value = false;
+  }
+}
 
 async function salvarFunko() {
   mensagemErro.value = '';
@@ -54,8 +67,8 @@ async function salvarFunko() {
       throw new Error('Não foi possível cadastrar o produto. Verifique os dados.');
     }
 
-    // Redireciona para a listagem após o sucesso
-    router.push({ name: 'produtos' });
+
+    router.push({ name: 'home' });
 
   } catch (erro) {
     console.error('Erro ao salvar:', erro);
@@ -64,6 +77,8 @@ async function salvarFunko() {
     salvando.value = false;
   }
 }
+
+carregarCategorias();
 </script>
 
 <template>
@@ -77,7 +92,7 @@ async function salvarFunko() {
 
     <RouterLink
       class="btn btn-outline-primary mb-4"
-      :to="{ name: 'produtos' }"
+      :to="{ name: 'home' }"
     >
       ← Voltar para produtos
     </RouterLink>
@@ -132,15 +147,29 @@ async function salvarFunko() {
       </div>
 
       <div class="col-md-4">
-        <label for="categoriaId" class="form-label">ID da categoria</label>
-        <input
+        <label for="categoriaId" class="form-label">Categoria</label>
+        <select
           id="categoriaId"
-          type="number"
           class="form-control"
           v-model="novoFunko.categoriaId"
-          min="1"
+          :disabled="carregandoCategorias || categorias.length === 0"
           required
-        />
+        >
+          <option value="" disabled>
+            {{ carregandoCategorias ? 'Carregando categorias...' : 'Selecione uma categoria' }}
+          </option>
+          <option
+            v-for="categoria in categorias"
+            :key="categoria.id"
+            :value="categoria.id"
+          >
+            {{ categoria.nome }}
+          </option>
+        </select>
+        <small v-if="!carregandoCategorias && categorias.length === 0" class="text-danger">
+          Cadastre uma categoria antes de adicionar um Funko.
+          <RouterLink to="/categorias">Gerenciar categorias</RouterLink>
+        </small>
       </div>
 
       <div class="col-md-4">
@@ -284,7 +313,7 @@ async function salvarFunko() {
 
         <RouterLink
           class="btn btn-outline-secondary"
-          :to="{ name: 'produtos' }"
+          :to="{ name: 'home' }"
         >
           Cancelar
         </RouterLink>

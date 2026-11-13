@@ -28,7 +28,17 @@ const router = createRouter({
       name: 'addUsuario',
       component: () => import('../views/AddUsuario.vue'),
     },
-    
+    {
+      path: '/categorias',
+      name: 'categorias',
+      component: () => import('../views/CategoriasView.vue'),
+    },
+     {
+      path: '/carrinho',
+      name: 'carrinho',
+      component: () => import('../views/carrinho/CarrinhoView.vue'),
+    },
+     
   ],
 });
 
