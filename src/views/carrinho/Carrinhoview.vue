@@ -8,6 +8,7 @@ import {
   ouvirAlteracoesCarrinho,
   removerDoCarrinho,
 } from '@/services/carrinho';
+import { buscarEnderecoPorCep } from '@/services/cep';
 import { criarPedido } from '@/services/pedidos';
 
 defineOptions({ name: 'CarrinhoView' });
@@ -19,6 +20,8 @@ const mensagemSucesso = ref('');
 const pedidoCriado = ref(null);
 const exibindoCheckout = ref(false);
 const salvandoPedido = ref(false);
+const consultandoCep = ref(false);
+const mensagemCep = ref('');
 const dadosCheckout = ref({
   nome: '',
   email: '',
@@ -32,6 +35,7 @@ const dadosCheckout = ref({
   estado: '',
   pagamento: 'Pix',
 });
+let requisicaoCep;
 
 const quantidadeItens = computed(() =>
   itens.value.reduce((total, item) => total + item.quantidade, 0),
@@ -109,8 +113,63 @@ function abrirCheckout() {
   exibindoCheckout.value = true;
 }
 
+function limparBuscaCep() {
+  requisicaoCep?.abort();
+  requisicaoCep = undefined;
+  consultandoCep.value = false;
+  mensagemCep.value = '';
+  dadosCheckout.value.logradouro = '';
+  dadosCheckout.value.bairro = '';
+  dadosCheckout.value.cidade = '';
+  dadosCheckout.value.estado = '';
+}
+
+async function consultarCep() {
+  if (!dadosCheckout.value.cep.trim()) {
+    mensagemCep.value = '';
+    return;
+  }
+
+  mensagemCep.value = '';
+  const controller = new AbortController();
+  requisicaoCep?.abort();
+  requisicaoCep = controller;
+  consultandoCep.value = true;
+
+  try {
+    const endereco = await buscarEnderecoPorCep(dadosCheckout.value.cep, {
+      signal: controller.signal,
+    });
+
+    if (controller.signal.aborted) return;
+
+    dadosCheckout.value.cep = endereco.cep;
+    dadosCheckout.value.logradouro = endereco.logradouro;
+    dadosCheckout.value.bairro = endereco.bairro;
+    dadosCheckout.value.cidade = endereco.cidade;
+    dadosCheckout.value.estado = endereco.estado;
+    mensagemCep.value = 'Endereço preenchido pelo ViaCEP.';
+  } catch (erro) {
+    if (erro.name === 'AbortError') return;
+
+    console.error('Erro ao consultar CEP:', erro);
+    mensagemCep.value = erro.message || 'Não foi possível consultar este CEP.';
+  } finally {
+    if (requisicaoCep === controller) {
+      requisicaoCep = undefined;
+      consultandoCep.value = false;
+    }
+  }
+}
+
 async function finalizarPedido() {
-  if (itens.value.length === 0 || salvandoPedido.value) return;
+  if (
+    itens.value.length === 0 ||
+    salvandoPedido.value ||
+    consultandoCep.value
+  ) {
+    return;
+  }
 
   mensagemErro.value = '';
   mensagemSucesso.value = '';
@@ -178,6 +237,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   pararDeOuvir?.();
+  requisicaoCep?.abort();
 });
 </script>
 
@@ -461,8 +521,37 @@ onBeforeUnmount(() => {
                 class="form-control"
                 autocomplete="postal-code"
                 maxlength="12"
+                pattern="[0-9]{5}-?[0-9]{3}"
+                title="Informe um CEP válido com 8 números."
                 required
+                @input="limparBuscaCep"
+                @blur="consultarCep"
               />
+              <button
+                class="btn btn-sm btn-outline-secondary mt-2"
+                type="button"
+                :disabled="consultandoCep"
+                @click="consultarCep"
+              >
+                <span
+                  v-if="consultandoCep"
+                  class="spinner-border spinner-border-sm me-1"
+                  aria-hidden="true"
+                ></span>
+                {{ consultandoCep ? 'Consultando...' : 'Buscar CEP' }}
+              </button>
+              <p
+                v-if="mensagemCep"
+                class="small mt-1 mb-0"
+                :class="
+                  mensagemCep.startsWith('Endereço')
+                    ? 'text-success'
+                    : 'text-danger'
+                "
+                role="status"
+              >
+                {{ mensagemCep }}
+              </p>
             </div>
             <div class="col-md-8">
               <label
@@ -579,7 +668,7 @@ onBeforeUnmount(() => {
             <button
               class="btn btn-primary"
               type="submit"
-              :disabled="salvandoPedido"
+              :disabled="salvandoPedido || consultandoCep"
             >
               <span
                 v-if="salvandoPedido"
@@ -593,7 +682,7 @@ onBeforeUnmount(() => {
             <button
               class="btn btn-outline-secondary"
               type="button"
-              :disabled="salvandoPedido"
+              :disabled="salvandoPedido || consultandoCep"
               @click="exibindoCheckout = false"
             >
               Voltar ao carrinho

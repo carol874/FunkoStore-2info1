@@ -95,6 +95,7 @@ Consulte o [guia de estrutura do projeto](./docs/estrutura-projeto.md).
 - [Como utilizar o template](./docs/como-utilizar-template.md);
 - [Estrutura do projeto](./docs/estrutura-projeto.md);
 - [CRUD e endpoints de categorias](./docs/api-categorias.md);
+- [Cadastro de usuário e consulta de CEP](./docs/cadastro-e-cep.md);
 - [Pedidos e endpoints](./docs/api-pedidos.md);
 - [Guia de padronização do código](./docs/guia-padronizacao-codigo.md);
 - [Validação do projeto](./docs/validacao-template.md).
