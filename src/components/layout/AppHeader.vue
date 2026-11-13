@@ -77,6 +77,10 @@ onBeforeUnmount(() => {
             Categorias
           </RouterLink>
 
+          <RouterLink class="nav-link" to="/pedidos">
+            Pedidos
+          </RouterLink>
+
           <RouterLink class="nav-link" to="/carrinho">
            Meu carrinho
             <span v-if="quantidadeCarrinho" class="badge rounded-pill bg-light text-dark ms-1">

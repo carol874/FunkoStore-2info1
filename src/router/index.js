@@ -36,9 +36,18 @@ const router = createRouter({
      {
       path: '/carrinho',
       name: 'carrinho',
-      component: () => import('../views/carrinho/CarrinhoView.vue'),
+      component: () => import('../views/carrinho/Carrinhoview.vue'),
     },
-     
+     {
+       path: '/pedidos',
+       name: 'pedidos',
+       component: () => import('../views/PedidosView.vue'),
+     },
+     {
+       path: '/pedidos/:id',
+       name: 'detalhesPedido',
+       component: () => import('../views/PedidoDetalhesView.vue'),
+     },
   ],
 });
 

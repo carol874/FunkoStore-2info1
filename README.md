@@ -95,6 +95,7 @@ Consulte o [guia de estrutura do projeto](./docs/estrutura-projeto.md).
 - [Como utilizar o template](./docs/como-utilizar-template.md);
 - [Estrutura do projeto](./docs/estrutura-projeto.md);
 - [CRUD e endpoints de categorias](./docs/api-categorias.md);
+- [Pedidos e endpoints](./docs/api-pedidos.md);
 - [Guia de padronização do código](./docs/guia-padronizacao-codigo.md);
 - [Validação do projeto](./docs/validacao-template.md).
 
@@ -412,4 +413,3 @@ Categorias: (Marco): categorai onde vai estar dividido os produtos
 >>>>>>> ddf3c10 (alterado o readme)
 
 Ana Carolina: criação do CRUD do carrinho de compras, visualizar os funkos comprados, excluir funko da compra, finalizar o pedido e exluir pedido
-

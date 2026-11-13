@@ -13,13 +13,11 @@
     "lint:eslint": "eslint . --fix --cache",
     "format": "prettier --write src/",
     "api": "npx json-server db.json"
-    
   },
   "dependencies": {
     "axios": "^1.20.0",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
-    "json-server": "^1.0.0-beta.15",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0"
   },
@@ -31,6 +29,7 @@
     "eslint-plugin-oxlint": "~1.73.0",
     "eslint-plugin-vue": "~10.9.2",
     "globals": "^17.7.0",
+    "json-server": "^1.0.0-beta.15",
     "npm-run-all2": "^9.0.2",
     "oxlint": "~1.73.0",
     "prettier": "3.9.5",
