@@ -7,7 +7,10 @@ const router = useRouter();
 const categorias = ref([]);
 const carregandoCategorias = ref(true);
 
-// Objeto reativo para o formulário
+const API_URL = import.meta.env.DEV
+  ? 'http://localhost:3000'
+  : 'SUA_URL_DA_API';
+
 const novoFunko = ref({
   nome: '',
   personagem: '',
@@ -18,7 +21,7 @@ const novoFunko = ref({
   preco: '',
   imagem: '',
   estoque: '',
-  vendas: 0, // Valor inicial padrão
+  vendas: 0, 
   Avaliações: '',
   categoriaId: '',
 });
@@ -64,7 +67,7 @@ async function salvarFunko() {
       throw new Error('Não foi possível cadastrar o produto. Verifique os dados.');
     }
 
-    // Redireciona para a listagem após o sucesso
+
     router.push({ name: 'home' });
 
   } catch (erro) {

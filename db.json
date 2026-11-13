@@ -1,4 +1,3 @@
-
 {
   "usuarios": [
     {
@@ -86,6 +85,8 @@
     }
   ],     
   "produtos": [
+
+
   {
     "id": 1,
     "nome": "Spider-Man Funko Pop",
@@ -992,92 +993,92 @@
     {
       "id": "1",
       "nome": "Funko Homem-Aranha",
-      "preco": 249.90,
+      "preco": 249.9,
       "emEstoque": true
     },
 
     {
       "id": "2",
       "nome": "Funko Mob Psycho",
-      "preco": 89.50,
+      "preco": 89.5,
       "emEstoque": true
     },
     {
       "id": "3",
       "nome": "Funko Batman (The Batman)",
-      "preco": 149.90,
+      "preco": 149.9,
       "emEstoque": true
     },
     {
       "id": "4",
       "nome": "Funko Iron Man Mark 85",
-      "preco": 159.90,
+      "preco": 159.9,
       "emEstoque": false
     },
     {
       "id": "5",
       "nome": "Funko Pikachu",
-      "preco": 119.90,
+      "preco": 119.9,
       "emEstoque": true
     },
     {
       "id": "6",
       "nome": "Funko Naruto Uzumaki (Sexy Jutsu)",
-      "preco": 189.90,
+      "preco": 189.9,
       "emEstoque": true
     },
     {
       "id": "7",
       "nome": "Funko Darth Vader",
-      "preco": 139.90,
+      "preco": 139.9,
       "emEstoque": false
     },
     {
       "id": "8",
       "nome": "Funko Baby Yoda (The Child)",
-      "preco": 169.90,
+      "preco": 169.9,
       "emEstoque": true
     },
     {
       "id": "9",
       "nome": "Funko Harry Potter com Edwiges",
-      "preco": 145.00,
+      "preco": 145.0,
       "emEstoque": true
     },
     {
       "id": "10",
       "nome": "Funko Eleven (Stranger Things)",
-      "preco": 129.90,
+      "preco": 129.9,
       "emEstoque": true
     },
     {
       "id": "11",
       "nome": "Funko Luffy (One Piece)",
-      "preco": 219.90,
+      "preco": 219.9,
       "emEstoque": false
     },
     {
       "id": "12",
       "nome": "Funko Tanjiro Kamado (Demon Slayer)",
-      "preco": 154.90,
+      "preco": 154.9,
       "emEstoque": true
     },
     {
       "id": "13",
       "nome": "Funko Goku Super Saiyan",
-      "preco": 134.90,
+      "preco": 134.9,
       "emEstoque": true
     },
     {
       "id": "14",
       "nome": "Funko Wednesday Addams",
-      "preco": 179.90,
+      "preco": 179.9,
       "emEstoque": true
     },
     {
       "id": "15",
       "nome": "Funko Sonic the Hedgehog",
-      "preco": 124.90,
+      "preco": 124.9,
       "emEstoque": false
     }
   ]
