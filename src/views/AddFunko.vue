@@ -1,7 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
-import { API_URL, listarCategorias } from '@/services/categorias';
+import { listarCategorias } from '@/services/categorias';
+import { criarFunko } from '@/services/funkos';
 
 const router = useRouter();
 const categorias = ref([]);
@@ -52,17 +53,7 @@ async function salvarFunko() {
       Avaliações: Number(novoFunko.value.Avaliações),
     };
 
-    const resposta = await fetch(`${API_URL}/produtos`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(produtoPayload),
-    });
-
-    if (!resposta.ok) {
-      throw new Error('Não foi possível cadastrar o produto. Verifique os dados.');
-    }
+    await criarFunko(produtoPayload);
 
     // Redireciona para a listagem após o sucesso
     router.push({ name: 'home' });

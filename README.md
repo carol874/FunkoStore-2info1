@@ -411,3 +411,4 @@ pagamento:(carol): sistema de pagamento uma finalização da compra
 Categorias: (Marco): categorai onde vai estar dividido os produtos 
 >>>>>>> ddf3c10 (alterado o readme)
 
+
