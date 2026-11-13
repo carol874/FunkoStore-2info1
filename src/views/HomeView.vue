@@ -1,18 +1,18 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import { adicionarAoCarrinho } from '@/services/carrinho';
 import { listarCategorias } from '@/services/categorias';
-import { atualizarFunko, excluirFunko, listarFunkos } from '@/services/funkos';
+import { listarFunkos } from '@/services/funkos';
 
 const funkos = ref([]);
 const categorias = ref([]);
 const carregando = ref(true);
 const mensagemErro = ref('');
+const mensagemSucesso = ref('');
 const busca = ref('');
 const categoriaSelecionada = ref('');
-const funkoEmEdicao = ref(null);
-const salvando = ref(false);
-const excluindoId = ref(null);
+const adicionandoId = ref(null);
 
 const funkosFiltrados = computed(() => {
   const termo = busca.value.trim().toLocaleLowerCase('pt-BR');
@@ -52,8 +52,10 @@ async function carregarDados() {
 }
 
 function nomeCategoria(id) {
-  return categorias.value.find((categoria) => String(categoria.id) === String(id))
-    ?.nome || 'Sem categoria';
+  return (
+    categorias.value.find((categoria) => String(categoria.id) === String(id))
+      ?.nome || 'Sem categoria'
+  );
 }
 
 function formatarPreco(preco) {
@@ -67,69 +69,19 @@ function imagemIndisponivel(evento) {
   evento.currentTarget.hidden = true;
 }
 
-function editarFunko(funko) {
-  funkoEmEdicao.value = {
-    id: funko.id,
-    nome: funko.nome || '',
-    personagem: funko.personagem || '',
-    descricao: funko.descricao || '',
-    anoLancamento: funko.anoLancamento || '',
-    preco: funko.preco ?? '',
-    imagem: funko.imagem || '',
-    estoque: funko.estoque ?? 0,
-    categoriaId: funko.categoriaId ?? '',
-  };
-}
-
-function fecharEdicao() {
-  if (!salvando.value) {
-    funkoEmEdicao.value = null;
-  }
-}
-
-async function salvarEdicao() {
-  if (!funkoEmEdicao.value) return;
-
-  salvando.value = true;
+function adicionarFunko(funko) {
   mensagemErro.value = '';
+  mensagemSucesso.value = '';
+  adicionandoId.value = funko.id;
 
   try {
-    const alteracoes = {
-      ...funkoEmEdicao.value,
-      anoLancamento: Number(funkoEmEdicao.value.anoLancamento),
-      preco: Number(funkoEmEdicao.value.preco),
-      estoque: Number(funkoEmEdicao.value.estoque),
-      categoriaId: Number(funkoEmEdicao.value.categoriaId),
-    };
-
-    delete alteracoes.id;
-    await atualizarFunko(funkoEmEdicao.value.id, alteracoes);
-    funkoEmEdicao.value = null;
-    await carregarDados();
+    adicionarAoCarrinho(funko);
+    mensagemSucesso.value = `${funko.nome} foi adicionado ao carrinho.`;
   } catch (erro) {
-    console.error('Erro ao atualizar Funko:', erro);
-    mensagemErro.value = erro.message || 'Não foi possível atualizar o Funko.';
+    console.error('Erro ao adicionar Funko ao carrinho:', erro);
+    mensagemErro.value = erro.message || 'Não foi possível adicionar ao carrinho.';
   } finally {
-    salvando.value = false;
-  }
-}
-
-async function removerFunko(funko) {
-  if (!window.confirm(`Deseja excluir "${funko.nome}"? Esta ação não pode ser desfeita.`)) {
-    return;
-  }
-
-  excluindoId.value = funko.id;
-  mensagemErro.value = '';
-
-  try {
-    await excluirFunko(funko.id);
-    funkos.value = funkos.value.filter((item) => item.id !== funko.id);
-  } catch (erro) {
-    console.error('Erro ao excluir Funko:', erro);
-    mensagemErro.value = erro.message || 'Não foi possível excluir o Funko.';
-  } finally {
-    excluindoId.value = null;
+    adicionandoId.value = null;
   }
 }
 
@@ -164,7 +116,8 @@ onMounted(carregarDados);
           <h2 id="catalog-title">Nossa coleção</h2>
         </div>
         <span class="product-count">
-          {{ funkosFiltrados.length }} {{ funkosFiltrados.length === 1 ? 'produto' : 'produtos' }}
+          {{ funkosFiltrados.length }}
+          {{ funkosFiltrados.length === 1 ? 'produto' : 'produtos' }}
         </span>
       </div>
 
@@ -179,215 +132,92 @@ onMounted(carregarDados);
           />
         </label>
         <label class="category-field">
-          <span class="visually-hidden">Filtrar por categoria</span>
           <i class="bi bi-filter" aria-hidden="true"></i>
+          <span class="visually-hidden">Filtrar por categoria</span>
           <select v-model="categoriaSelecionada">
             <option value="">Todas as categorias</option>
-            <option v-for="categoria in categorias" :key="categoria.id" :value="categoria.id">
+            <option
+              v-for="categoria in categorias"
+              :key="categoria.id"
+              :value="categoria.id"
+            >
               {{ categoria.nome }}
             </option>
           </select>
         </label>
       </div>
 
-      <div v-if="mensagemErro" class="alert alert-danger d-flex align-items-center gap-2" role="alert">
-        <i class="bi bi-exclamation-circle-fill" aria-hidden="true"></i>
-        <span>{{ mensagemErro }}</span>
-        <button class="btn btn-sm btn-outline-danger ms-auto" type="button" @click="carregarDados">
+      <div v-if="mensagemErro" class="alert alert-danger" role="alert">
+        {{ mensagemErro }}
+        <button
+          class="btn btn-sm btn-outline-danger ms-2"
+          type="button"
+          @click="carregarDados"
+        >
           Tentar novamente
         </button>
       </div>
-
-      <div v-if="carregando" class="catalog-message" role="status">
-        <span class="spinner-border text-primary" aria-hidden="true"></span>
-        <span>Carregando coleção...</span>
-      </div>
-
-      <div v-else-if="!mensagemErro && funkos.length === 0" class="catalog-message empty-state">
-        <i class="bi bi-box-seam" aria-hidden="true"></i>
-        <h3>A coleção ainda está vazia</h3>
-        <p>Cadastre o primeiro Funko para começar.</p>
-        <RouterLink class="btn btn-primary" :to="{ name: 'addFunkos' }">
-          Cadastrar primeiro Funko
+      <div v-if="mensagemSucesso" class="alert alert-success" role="status">
+        {{ mensagemSucesso }}
+        <RouterLink class="alert-link ms-1" to="/carrinho">
+          Ver carrinho
         </RouterLink>
       </div>
 
-      <div
-        v-else-if="!mensagemErro && funkosFiltrados.length === 0"
-        class="catalog-message empty-state"
-      >
+      <div v-if="carregando" class="catalog-message" role="status">
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        Carregando Funkos...
+      </div>
+      <div v-else-if="!mensagemErro && funkosFiltrados.length === 0" class="catalog-message empty-state">
         <i class="bi bi-search" aria-hidden="true"></i>
         <h3>Nenhum Funko encontrado</h3>
-        <p>Tente outro termo ou escolha uma categoria diferente.</p>
-        <button
-          class="btn btn-outline-primary"
-          type="button"
-          @click="busca = ''; categoriaSelecionada = ''"
-        >
-          Limpar filtros
-        </button>
+        <p>Experimente mudar a busca ou o filtro de categoria.</p>
       </div>
-
       <div v-else-if="!mensagemErro" class="product-grid">
         <article v-for="funko in funkosFiltrados" :key="funko.id" class="product-card">
-          <div class="product-image">
+          <RouterLink
+            class="product-image"
+            :to="{ name: 'detalhesFunkos', params: { id: funko.id } }"
+            :aria-label="`Ver detalhes de ${funko.nome}`"
+          >
             <span class="product-category">{{ nomeCategoria(funko.categoriaId) }}</span>
-            <i class="bi bi-box-heart image-placeholder" aria-hidden="true"></i>
+            <span class="image-placeholder" aria-hidden="true">
+              <i class="bi bi-box-seam"></i>
+            </span>
             <img
               v-if="funko.imagem"
               :src="funko.imagem"
-              :alt="`Funko ${funko.personagem || funko.nome}`"
+              :alt="funko.nome"
               loading="lazy"
               @error="imagemIndisponivel"
             />
-          </div>
+          </RouterLink>
+
           <div class="product-info">
-            <p class="product-character">{{ funko.personagem || 'Funko Pop!' }}</p>
+            <p class="product-character">{{ funko.personagem || 'Funko Pop' }}</p>
             <h3>{{ funko.nome }}</h3>
-            <p class="product-description">{{ funko.descricao || 'Item especial para sua coleção.' }}</p>
-            <div class="product-meta">
-              <span>{{ funko.estoque > 0 ? `${funko.estoque} em estoque` : 'Fora de estoque' }}</span>
-              <span v-if="funko.anoLancamento">{{ funko.anoLancamento }}</span>
-            </div>
+            <p class="product-description">{{ funko.descricao }}</p>
+            <p class="product-stock">
+              <i class="bi bi-box-seam" aria-hidden="true"></i>
+              {{ Number(funko.estoque) > 0 ? `${funko.estoque} em estoque` : 'Indisponível' }}
+            </p>
             <div class="product-footer">
               <strong>{{ formatarPreco(funko.preco) }}</strong>
-              <div class="product-actions">
-                <button
-                  class="icon-button"
-                  type="button"
-                  :aria-label="`Editar ${funko.nome}`"
-                  title="Editar"
-                  @click="editarFunko(funko)"
-                >
-                  <i class="bi bi-pencil" aria-hidden="true"></i>
-                </button>
-                <button
-                  class="icon-button delete-button"
-                  type="button"
-                  :aria-label="`Excluir ${funko.nome}`"
-                  title="Excluir"
-                  :disabled="excluindoId === funko.id"
-                  @click="removerFunko(funko)"
-                >
-                  <span
-                    v-if="excluindoId === funko.id"
-                    class="spinner-border spinner-border-sm"
-                    aria-hidden="true"
-                  ></span>
-                  <i v-else class="bi bi-trash3" aria-hidden="true"></i>
-                </button>
-              </div>
+              <button
+                class="btn btn-sm btn-add-cart"
+                type="button"
+                :disabled="Number(funko.estoque) < 1 || adicionandoId === funko.id"
+                :aria-label="`Adicionar ${funko.nome} ao carrinho`"
+                @click="adicionarFunko(funko)"
+              >
+                <i class="bi bi-cart-plus" aria-hidden="true"></i>
+                {{ adicionandoId === funko.id ? 'Adicionando...' : 'Adicionar' }}
+              </button>
             </div>
           </div>
         </article>
       </div>
     </section>
-
-    <div
-      v-if="funkoEmEdicao"
-      class="edit-backdrop"
-      @click.self="fecharEdicao"
-      @keydown.esc="fecharEdicao"
-    >
-      <section
-        class="edit-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-title"
-        tabindex="-1"
-      >
-        <div class="edit-heading">
-          <div>
-            <span class="section-eyebrow">Atualize sua coleção</span>
-            <h2 id="edit-title">Editar Funko</h2>
-          </div>
-          <button
-            class="icon-button"
-            type="button"
-            aria-label="Fechar edição"
-            :disabled="salvando"
-            @click="fecharEdicao"
-          >
-            <i class="bi bi-x-lg" aria-hidden="true"></i>
-          </button>
-        </div>
-        <form class="edit-form" @submit.prevent="salvarEdicao">
-          <label>
-            Nome do Funko
-            <input v-model.trim="funkoEmEdicao.nome" class="form-control" required />
-          </label>
-          <label>
-            Personagem
-            <input v-model.trim="funkoEmEdicao.personagem" class="form-control" required />
-          </label>
-          <label>
-            Descrição
-            <textarea v-model.trim="funkoEmEdicao.descricao" class="form-control" rows="2"></textarea>
-          </label>
-          <div class="edit-fields-row">
-            <label>
-              Ano de lançamento
-              <input
-                v-model="funkoEmEdicao.anoLancamento"
-                class="form-control"
-                type="number"
-                min="1900"
-                required
-              />
-            </label>
-            <label>
-              Preço (R$)
-              <input
-                v-model="funkoEmEdicao.preco"
-                class="form-control"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-              />
-            </label>
-          </div>
-          <div class="edit-fields-row">
-            <label>
-              Estoque
-              <input
-                v-model="funkoEmEdicao.estoque"
-                class="form-control"
-                type="number"
-                min="0"
-                required
-              />
-            </label>
-            <label>
-              Categoria
-              <select v-model="funkoEmEdicao.categoriaId" class="form-select" required>
-                <option value="" disabled>Selecione</option>
-                <option v-for="categoria in categorias" :key="categoria.id" :value="categoria.id">
-                  {{ categoria.nome }}
-                </option>
-              </select>
-            </label>
-          </div>
-          <label>
-            URL da imagem
-            <input v-model.trim="funkoEmEdicao.imagem" class="form-control" type="url" />
-          </label>
-          <div class="edit-actions">
-            <button class="btn btn-outline-secondary" type="button" :disabled="salvando" @click="fecharEdicao">
-              Cancelar
-            </button>
-            <button class="btn btn-primary" type="submit" :disabled="salvando">
-              <span
-                v-if="salvando"
-                class="spinner-border spinner-border-sm me-2"
-                aria-hidden="true"
-              ></span>
-              {{ salvando ? 'Salvando...' : 'Salvar alterações' }}
-            </button>
-          </div>
-        </form>
-      </section>
-    </div>
   </div>
 </template>
 
@@ -400,15 +230,15 @@ onMounted(carregarDados);
 
 .storefront-hero {
   overflow: hidden;
-  background: linear-gradient(115deg, #fff0e8 0%, #fff8f1 55%, #ffe1d1 100%);
+  background: linear-gradient(115deg, #fff0e8 0%, #fff8f1 62%, #ffe1d3 100%);
 }
 
 .hero-content {
-  position: relative;
   display: flex;
-  min-height: 320px;
+  min-height: 310px;
   align-items: center;
   justify-content: space-between;
+  gap: 2rem;
   padding-top: 3rem;
   padding-bottom: 3rem;
 }
@@ -441,16 +271,21 @@ onMounted(carregarDados);
   font-size: 1.08rem;
 }
 
-.hero-button {
+.hero-button,
+.btn-add-cart {
   border: 0;
   border-radius: 0.75rem;
   background: #d65b47;
   color: white;
   font-weight: 700;
+}
+
+.hero-button {
   padding: 0.75rem 1rem;
 }
 
-.hero-button:hover {
+.hero-button:hover,
+.btn-add-cart:hover:not(:disabled) {
   background: #b94535;
   color: white;
 }
@@ -497,15 +332,14 @@ onMounted(carregarDados);
 }
 
 .catalog-heading,
-.product-footer,
-.edit-heading {
+.product-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
 }
 
-.catalog-heading h2,
-.edit-heading h2 {
+.catalog-heading h2 {
   margin: 0.35rem 0 0;
   font-size: 1.85rem;
   font-weight: 800;
@@ -668,141 +502,34 @@ onMounted(carregarDados);
   min-height: 2.6rem;
   overflow: hidden;
   margin: 0.45rem 0 0.7rem;
-  color: #756c69;
-  font-size: 0.86rem;
+  color: #746b69;
+  font-size: 0.88rem;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
-.product-meta {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid #f1e9e5;
-  color: #857b77;
-  font-size: 0.78rem;
-  padding-bottom: 0.75rem;
-}
-
-.product-footer {
-  gap: 0.6rem;
-  padding-top: 0.75rem;
+.product-stock {
+  margin-bottom: 0.9rem;
+  color: #746b69;
+  font-size: 0.8rem;
 }
 
 .product-footer strong {
-  color: #292332;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
 
-.product-actions {
-  display: flex;
-  gap: 0.35rem;
+.btn-add-cart:disabled {
+  background: #b7aaa6;
+  color: white;
 }
 
-.icon-button {
-  display: inline-grid;
-  width: 36px;
-  height: 36px;
-  place-items: center;
-  border: 1px solid #eadfd9;
-  border-radius: 0.65rem;
-  background: white;
-  color: #655b5a;
-}
-
-.icon-button:hover:not(:disabled) {
-  border-color: #d65b47;
-  color: #c94d3b;
-}
-
-.icon-button:disabled {
-  opacity: 0.65;
-}
-
-.delete-button:hover:not(:disabled) {
-  border-color: #dc3545;
-  color: #dc3545;
-}
-
-.edit-backdrop {
-  position: fixed;
-  z-index: 1050;
-  inset: 0;
-  display: grid;
-  overflow-y: auto;
-  place-items: center;
-  background: rgb(33 27 31 / 55%);
-  padding: 1rem;
-}
-
-.edit-dialog {
-  width: min(100%, 590px);
-  max-height: calc(100vh - 2rem);
-  overflow-y: auto;
-  border-radius: 1rem;
-  background: white;
-  box-shadow: 0 24px 70px rgb(0 0 0 / 20%);
-  padding: 1.5rem;
-}
-
-.edit-heading {
-  margin-bottom: 1.2rem;
-}
-
-.edit-heading h2 {
-  font-size: 1.5rem;
-}
-
-.edit-form {
-  display: grid;
-  gap: 0.9rem;
-}
-
-.edit-form label {
-  display: grid;
-  gap: 0.35rem;
-  color: #514846;
-  font-size: 0.88rem;
-  font-weight: 650;
-}
-
-.edit-fields-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.8rem;
-}
-
-.edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.6rem;
-  margin-top: 0.4rem;
-}
-
-@media (max-width: 640px) {
+@media (max-width: 575px) {
   .hero-content {
-    min-height: 285px;
+    min-height: 270px;
   }
 
   .hero-art {
-    position: absolute;
-    right: -5.2rem;
-    bottom: -3.2rem;
-    width: 175px;
-    height: 150px;
-    opacity: 0.52;
-  }
-
-  .hero-content > div:first-child {
-    position: relative;
-    z-index: 1;
-  }
-
-  .hero-content h1 {
-    max-width: 420px;
-  }
-
-  .catalog-section {
-    padding-top: 2.3rem;
+    display: none;
   }
 
   .catalog-filters {
@@ -813,27 +540,9 @@ onMounted(carregarDados);
     width: 100%;
   }
 
-  .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 0.75rem;
-  }
-
-  .product-image {
-    height: 170px;
-  }
-
-  .product-info {
-    padding: 0.75rem;
-  }
-
-  .product-footer strong {
-    font-size: 0.95rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .product-card {
-    transition: none;
+  .product-footer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

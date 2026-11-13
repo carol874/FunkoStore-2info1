@@ -411,4 +411,5 @@ pagamento:(carol): sistema de pagamento uma finalização da compra
 Categorias: (Marco): categorai onde vai estar dividido os produtos 
 >>>>>>> ddf3c10 (alterado o readme)
 
+Ana Carolina: criação do CRUD do carrinho de compras, visualizar os funkos comprados, excluir funko da compra, finalizar o pedido e exluir pedido
 

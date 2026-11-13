@@ -1,5 +1,31 @@
 <script setup>
-import { RouterLink } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { RouterLink } from 'vue-router';
+import { lerCarrinho, ouvirAlteracoesCarrinho } from '@/services/carrinho';
+
+const itensCarrinho = ref([]);
+const quantidadeCarrinho = computed(() =>
+  itensCarrinho.value.reduce((total, item) => total + item.quantidade, 0),
+);
+
+function atualizarCarrinho() {
+  try {
+    itensCarrinho.value = lerCarrinho();
+  } catch (erro) {
+    console.error('Erro ao atualizar o indicador do carrinho:', erro);
+  }
+}
+
+let pararDeOuvir;
+
+onMounted(() => {
+  atualizarCarrinho();
+  pararDeOuvir = ouvirAlteracoesCarrinho(atualizarCarrinho);
+});
+
+onBeforeUnmount(() => {
+  pararDeOuvir?.();
+});
 </script>
 
 <template>
@@ -51,8 +77,12 @@ import { RouterLink } from 'vue-router'
             Categorias
           </RouterLink>
 
-          <RouterLink class="nav-link" to="/pedidos">
+          <RouterLink class="nav-link" to="/carrinho">
            Meu carrinho
+            <span v-if="quantidadeCarrinho" class="badge rounded-pill bg-light text-dark ms-1">
+              {{ quantidadeCarrinho }}
+              <span class="visually-hidden">itens no carrinho</span>
+            </span>
           </RouterLink>
 
         </div>
