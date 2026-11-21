@@ -8,14 +8,13 @@ const quantidadeCarrinho = computed(() =>
   itensCarrinho.value.reduce((total, item) => total + item.quantidade, 0),
 );
 
-function atualizarCarrinho() {
+async function atualizarCarrinho() {
   try {
-    itensCarrinho.value = lerCarrinho();
+    itensCarrinho.value = await lerCarrinho();
   } catch (erro) {
     console.error('Erro ao atualizar o indicador do carrinho:', erro);
   }
 }
-
 let pararDeOuvir;
 
 onMounted(() => {
