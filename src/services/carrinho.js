@@ -1,107 +1,152 @@
-const CHAVE_CARRINHO = 'funko-store-carrinho';
+import { API_URL } from './categorias';
+
 const EVENTO_CARRINHO = 'carrinho-atualizado';
+
+async function requisicao(endpoint, opcoes = {}) {
+  const resposta = await fetch(`${API_URL}${endpoint}`, opcoes);
+
+  if (!resposta.ok) {
+    throw new Error(`A API respondeu com o status HTTP ${resposta.status}.`);
+  }
+
+  const conteudo = await resposta.text();
+  return conteudo ? JSON.parse(conteudo) : null;
+}
 
 function notificarAlteracao() {
   window.dispatchEvent(new Event(EVENTO_CARRINHO));
 }
 
-export function lerCarrinho() {
-  const conteudo = window.localStorage.getItem(CHAVE_CARRINHO);
+export async function lerCarrinho() {
+  const carrinhos = await requisicao('/carrinhos');
 
-  if (!conteudo) {
-    return [];
+  if (!Array.isArray(carrinhos)) {
+    throw new Error('A resposta da API do carrinho é inválida.');
   }
 
-  const itens = JSON.parse(conteudo);
+  const itens = await Promise.all(
+    carrinhos.map(async item => {
+      const funko = await requisicao(`/produtos/${item.funkoId}`);
 
-  if (
-    !Array.isArray(itens) ||
-    itens.some(
-      (item) =>
-        item.id === undefined ||
-        typeof item.quantidade !== 'number' ||
-        item.quantidade < 1,
-    )
-  ) {
-    throw new Error('Os dados salvos no carrinho são inválidos.');
-  }
+      return {
+        ...funko,
+        id: item.id,
+        funkoId: item.funkoId,
+        quantidade: Number(item.quantidade),
+        dataAdicao: item.dataAdicao,
+      };
+    }),
+  );
 
   return itens;
 }
 
-function salvarCarrinho(itens) {
-  window.localStorage.setItem(CHAVE_CARRINHO, JSON.stringify(itens));
-  notificarAlteracao();
-}
+export async function adicionarAoCarrinho(funko) {
+  if (!funko || !funko.id) {
+    throw new Error('Funko inválido.');
+  }
 
-export function adicionarAoCarrinho(funko) {
-  const itens = lerCarrinho();
   const estoque = Number(funko.estoque);
 
   if (!Number.isFinite(estoque) || estoque < 1) {
     throw new Error('Este Funko está indisponível no momento.');
   }
 
-  const existente = itens.find((item) => String(item.id) === String(funko.id));
+  const carrinhos = await requisicao('/carrinhos');
+
+  const existente = carrinhos.find(
+    item => String(item.funkoId) === String(funko.id),
+  );
 
   if (existente) {
-    if (existente.quantidade >= estoque) {
+    const novaQuantidade = Number(existente.quantidade) + 1;
+
+    if (novaQuantidade > estoque) {
       throw new Error('A quantidade no carrinho atingiu o limite do estoque.');
     }
 
-    existente.quantidade += 1;
+    await requisicao(`/carrinhos/${existente.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...existente,
+        quantidade: novaQuantidade,
+      }),
+    });
   } else {
-    itens.push({
-      id: funko.id,
-      nome: funko.nome,
-      personagem: funko.personagem,
-      preco: Number(funko.preco),
-      imagem: funko.imagem,
-      estoque,
-      quantidade: 1,
+    await requisicao('/carrinhos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        funkoId: funko.id,
+        quantidade: 1,
+        dataAdicao: new Date().toISOString(),
+      }),
     });
   }
 
-  salvarCarrinho(itens);
-  return itens;
+  notificarAlteracao();
+
+  return await lerCarrinho();
 }
 
-export function atualizarQuantidade(id, quantidade) {
-  const itens = lerCarrinho();
-  const item = itens.find((produto) => String(produto.id) === String(id));
+export async function atualizarQuantidade(id, quantidade) {
+  const item = await requisicao(`/carrinhos/${id}`);
 
-  if (!item) {
-    throw new Error('O Funko não foi encontrado no carrinho.');
+  const funko = await requisicao(`/produtos/${item.funkoId}`);
+
+  if (quantidade < 1) {
+    throw new Error('A quantidade deve ser maior que zero.');
   }
 
-  if (!Number.isInteger(quantidade) || quantidade < 1 || quantidade > item.estoque) {
-    throw new Error('A quantidade informada não está disponível em estoque.');
+  if (quantidade > Number(funko.estoque)) {
+    throw new Error('A quantidade ultrapassa o estoque disponível.');
   }
 
-  item.quantidade = quantidade;
-  salvarCarrinho(itens);
-  return itens;
+  await requisicao(`/carrinhos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...item,
+      quantidade: Number(quantidade),
+    }),
+  });
+
+  notificarAlteracao();
+
+  return await lerCarrinho();
 }
 
-export function removerDoCarrinho(id) {
-  const itens = lerCarrinho().filter(
-    (item) => String(item.id) !== String(id),
+export async function removerDoCarrinho(id) {
+  await requisicao(`/carrinhos/${id}`, {
+    method: 'DELETE',
+  });
+
+  notificarAlteracao();
+
+  return await lerCarrinho();
+}
+
+export async function esvaziarCarrinho() {
+  const carrinhos = await requisicao('/carrinhos');
+
+  await Promise.all(
+    carrinhos.map(item =>
+      requisicao(`/carrinhos/${item.id}`, {
+        method: 'DELETE',
+      }),
+    ),
   );
-  salvarCarrinho(itens);
-  return itens;
-}
 
-export function esvaziarCarrinho() {
-  salvarCarrinho([]);
+  notificarAlteracao();
+
   return [];
 }
 
 export function ouvirAlteracoesCarrinho(callback) {
   window.addEventListener(EVENTO_CARRINHO, callback);
-  window.addEventListener('storage', callback);
 
   return () => {
     window.removeEventListener(EVENTO_CARRINHO, callback);
-    window.removeEventListener('storage', callback);
   };
 }

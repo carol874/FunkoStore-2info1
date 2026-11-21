@@ -1,4 +1,12 @@
 {
+  "carrinhos": [
+    {
+      "funkoId": "23",
+      "quantidade": 1,
+      "dataAdicao": "2026-11-21T21:29:18.165Z",
+      "id": "XXl_-Nq1IzU"
+    }
+  ],
   "usuarios": [
     {
       "id": "1",
