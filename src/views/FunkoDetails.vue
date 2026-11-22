@@ -1,413 +1,425 @@
-O código da página de detalhes está bem estruturado e funcional, mas é possível aplicar algumas melhorias importantes em termos de **experiência do usuário (UX)**, **tratamento de erros**, **otimização de imagens** e **limpeza de código**.
 
-### Principais melhorias aplicadas:
-
-1. **Tratamento de ID Inválido**: Adicionada validação do parâmetro da rota para evitar chamadas de API desnecessárias caso o ID venha vazio ou inválido.
-2. **Skeleton / Feedback de Carregamento Aprimorado**: Substituição da mensagem simples por um design mais polido durante o fetch.
-3. **Lazy Loading e Fallback de Imagem**: Proteção contra URLs de imagem quebradas ou ausentes e atributo `loading="lazy"` para performance.
-4. **Normalização de Dados**: Tratamento para chaves com acentuação (`Avaliações`) com fallback seguro.
-5. **Responsividade e Limpeza CSS**: Otimização do layout e refatoração de regras duplicadas.
-
----
-
-### Código Otimizado
-
-```vue
 <script setup>
-import { onMounted, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, watch } from 'vue';
+import { RouterLink, useRoute } from 'vue-router';
+import { API_URL } from '@/services/categorias';
+import {
+  atualizarComentario,
+  criarComentario,
+  excluirComentario,
+  listarComentarios,
+  verificarCompra,
+} from '@/services/comentarios';
 
 const route = useRoute();
-const router = useRouter();
-
-const API_URL = import.meta.env.DEV
-  ? 'http://localhost:3000'
-  : 'SUA_URL_DA_API';
 
 const produto = ref(null);
+const comentarios = ref([]);
 const carregando = ref(true);
 const erro = ref('');
 
-async function carregarProduto() {
+const email = ref('');
+const usuarioAtual = ref(null);
+const verificando = ref(false);
+const mensagemAcesso = ref('');
+
+const textoComentario = ref('');
+const comentarioEditando = ref(null);
+const salvando = ref(false);
+const mensagemComentario = ref('');
+
+async function carregarDados() {
+  carregando.value = true;
+  erro.value = '';
+  usuarioAtual.value = null;
+
   try {
-    carregando.value = true;
-    erro.value = '';
-
-    const idProduto = route.params.id;
-    if (!idProduto) {
-      throw new Error('Identificador do produto não fornecido.');
-    }
-
-    const resposta = await fetch(`${API_URL}/produtos/${idProduto}`);
+    const resposta = await fetch(`${API_URL}/produtos/${route.params.id}`);
 
     if (!resposta.ok) {
-      throw new Error('Produto não encontrado ou indisponível.');
+      throw new Error('Funko não encontrado.');
     }
 
     produto.value = await resposta.json();
-
-  } catch (error) {
-    console.error('Erro ao carregar produto:', error);
-    erro.value = error.message || 'Não foi possível carregar os detalhes do produto.';
+    comentarios.value = await listarComentarios(route.params.id);
+  } catch (erroCarregamento) {
+    erro.value = erroCarregamento.message;
   } finally {
     carregando.value = false;
   }
 }
 
+async function conferirCompra() {
+  mensagemAcesso.value = '';
+  usuarioAtual.value = null;
+  verificando.value = true;
+
+  try {
+    if (!email.value.trim()) {
+      mensagemAcesso.value = 'Informe seu e-mail.';
+      return;
+    }
+
+    const usuario = await verificarCompra(email.value, route.params.id);
+
+    if (!usuario) {
+      mensagemAcesso.value = 'Não encontramos uma compra deste Funko para este cadastro.';
+      return;
+    }
+
+    usuarioAtual.value = usuario;
+
+    const existente = comentarios.value.find(
+      item => String(item.usuarioId) === String(usuario.id)
+    );
+
+    if (existente) {
+      comentarioEditando.value = existente.id;
+      textoComentario.value = existente.texto;
+      mensagemAcesso.value = 'Você já comentou. Pode editar seu comentário.';
+    } else {
+      comentarioEditando.value = null;
+      textoComentario.value = '';
+      mensagemAcesso.value = `Compra confirmada! Olá, ${usuario.nome}.`;
+    }
+  } catch (erroVerificacao) {
+    mensagemAcesso.value = erroVerificacao.message;
+  } finally {
+    verificando.value = false;
+  }
+}
+
+async function salvarComentario() {
+  mensagemComentario.value = '';
+
+  if (!usuarioAtual.value) {
+    mensagemComentario.value = 'Verifique sua compra primeiro.';
+    return;
+  }
+
+  if (!textoComentario.value.trim()) {
+    mensagemComentario.value = 'Escreva um comentário.';
+    return;
+  }
+
+  if (textoComentario.value.length > 300) {
+    mensagemComentario.value = 'O comentário pode ter no máximo 300 caracteres.';
+    return;
+  }
+
+  salvando.value = true;
+
+  try {
+    if (comentarioEditando.value) {
+      await atualizarComentario(
+        comentarioEditando.value,
+        usuarioAtual.value,
+        textoComentario.value
+      );
+    } else {
+      await criarComentario(
+        usuarioAtual.value,
+        route.params.id,
+        textoComentario.value
+      );
+    }
+
+    comentarios.value = await listarComentarios(route.params.id);
+
+    const salvo = comentarios.value.find(
+      item => String(item.usuarioId) === String(usuarioAtual.value.id)
+    );
+
+    comentarioEditando.value = salvo?.id || null;
+    textoComentario.value = salvo?.texto || '';
+    mensagemComentario.value = 'Comentário salvo com sucesso!';
+  } catch (erroSalvar) {
+    mensagemComentario.value = erroSalvar.message;
+  } finally {
+    salvando.value = false;
+  }
+}
+
+function editarComentario(comentario) {
+  comentarioEditando.value = comentario.id;
+  textoComentario.value = comentario.texto;
+  mensagemComentario.value = '';
+}
+
+async function removerComentario(comentario) {
+  if (!window.confirm('Deseja excluir seu comentário?')) return;
+
+  try {
+    await excluirComentario(comentario.id, usuarioAtual.value);
+
+    comentarios.value = await listarComentarios(route.params.id);
+    comentarioEditando.value = null;
+    textoComentario.value = '';
+    mensagemComentario.value = 'Comentário excluído.';
+  } catch (erroExcluir) {
+    mensagemComentario.value = erroExcluir.message;
+  }
+}
+
 function formatarPreco(preco) {
-  const valor = Number(preco) || 0;
-  return valor.toLocaleString('pt-BR', {
+  return Number(preco || 0).toLocaleString('pt-BR', {
     style: 'currency',
-    currency: 'BRL'
+    currency: 'BRL',
   });
 }
 
-onMounted(carregarProduto);
+function formatarData(data) {
+  const dataComentario = new Date(data);
+
+  if (Number.isNaN(dataComentario.getTime())) return '';
+
+  return dataComentario.toLocaleDateString('pt-BR');
+}
+
+watch(() => route.params.id, carregarDados, { immediate: true });
 </script>
 
 <template>
-  <main class="detalhes-produto">
+  <main class="container py-5">
 
-    <!-- Carregamento -->
-    <section v-if="carregando" class="mensagem">
-      <div class="spinner"></div>
-      <p>Carregando detalhes do produto...</p>
-    </section>
+    <div v-if="carregando" class="text-center py-5">
+      <div class="spinner-border" role="status"></div>
+      <p class="mt-3">Carregando Funko...</p>
+    </div>
 
-    <!-- Erro -->
-    <section v-else-if="erro" class="mensagem erro-container">
-      <h2>Ops! Algo deu errado</h2>
-      <p>{{ erro }}</p>
-      <button class="botao-acao" @click="router.back()">
-        ← Voltar para produtos
-      </button>
-    </section>
+    <div v-else-if="erro" class="alert alert-danger">
+      {{ erro }}
+      <div class="mt-3">
+        <RouterLink to="/" class="btn btn-outline-danger">
+          Voltar para a loja
+        </RouterLink>
+      </div>
+    </div>
 
-    <!-- Detalhes do produto -->
-    <section v-else-if="produto" class="produto-container">
+    <div v-else-if="produto">
 
-      <button class="botao-voltar" @click="router.back()">
-        ← Voltar para produtos
-      </button>
+      <RouterLink to="/" class="btn btn-link text-decoration-none px-0 mb-3">
+        <i class="bi bi-arrow-left me-1"></i>
+        Voltar para a loja
+      </RouterLink>
 
-      <div class="produto-conteudo">
+      <div class="row g-4 align-items-center mb-5">
 
-        <!-- Imagem -->
-        <div class="produto-imagem">
-          <img
-            :src="produto.imagem"
-            :alt="produto.nome || 'Imagem do produto'"
-            loading="lazy"
-          />
+        <div class="col-md-5">
+          <div class="produto-imagem rounded-4 p-4 text-center">
+            <img
+              v-if="produto.imagem"
+              :src="produto.imagem"
+              :alt="produto.nome"
+              class="img-fluid"
+            />
+            <i v-else class="bi bi-box-seam display-1"></i>
+          </div>
         </div>
 
-        <!-- Informações principais -->
-        <div class="produto-informacoes">
+        <div class="col-md-7">
+          <span class="text-danger fw-bold">FUNKO POP</span>
 
-          <span class="produto-categoria">
-            Funko Pop Collection
-          </span>
+          <h1 class="fw-bold mt-2">{{ produto.nome }}</h1>
 
-          <h1>{{ produto.nome }}</h1>
-
-          <p v-if="produto.personagem" class="personagem">
-            <strong>Personagem:</strong> {{ produto.personagem }}
+          <p v-if="produto.personagem" class="text-muted">
+            Personagem: {{ produto.personagem }}
           </p>
 
-          <p class="descricao">
-            {{ produto.descricao }}
-          </p>
+          <p>{{ produto.descricao }}</p>
 
-          <div class="avaliacao" v-if="produto.Avaliações || produto.avaliacao">
-            <span>★</span>
-            {{ produto.Avaliações ?? produto.avaliacao }} / 5.0
-          </div>
-
-          <h2 class="preco">
+          <h2 class="text-danger mt-4">
             {{ formatarPreco(produto.preco) }}
           </h2>
 
-          <p
-            class="estoque"
-            :class="{ 'sem-estoque': produto.estoque === 0 }"
-          >
-            <span v-if="produto.estoque > 0">
-              ✓ {{ produto.estoque }} unidades disponíveis
-            </span>
-            <span v-else>
-              ✕ Produto indisponível
-            </span>
+          <p class="text-muted">
+            {{ produto.estoque }} unidades disponíveis
           </p>
-
         </div>
+
       </div>
 
-      <!-- Informações adicionais -->
-      <section v-if="produto.informacoes || produto.detalhes" class="produto-secao-texto">
-        <template v-if="produto.informacoes">
-          <h2>Sobre o produto</h2>
+      <section v-if="produto.informacoes || produto.detalhes" class="mb-5">
+        <div v-if="produto.informacoes" class="mb-4">
+          <h2 class="h4">Sobre o produto</h2>
           <p>{{ produto.informacoes }}</p>
-        </template>
-
-        <template v-if="produto.detalhes">
-          <h2>Detalhes do colecionável</h2>
-          <p>{{ produto.detalhes }}</p>
-        </template>
-      </section>
-
-      <!-- Características Grid -->
-      <section class="produto-caracteristicas">
-        <h2>Informações adicionais</h2>
-
-        <div class="caracteristicas-grid">
-
-          <div v-if="produto.anoLancamento" class="caracteristica">
-            <span>Ano de lançamento</span>
-            <strong>{{ produto.anoLancamento }}</strong>
-          </div>
-
-          <div v-if="produto.personagem" class="caracteristica">
-            <span>Personagem</span>
-            <strong>{{ produto.personagem }}</strong>
-          </div>
-
-          <div class="caracteristica">
-            <span>Estoque</span>
-            <strong>{{ produto.estoque ?? 0 }} unidades</strong>
-          </div>
-
-          <div class="caracteristica">
-            <span>Total de vendas</span>
-            <strong>{{ produto.vendas ?? 0 }}</strong>
-          </div>
-
-          <div v-if="produto.Avaliações || produto.avaliacao" class="caracteristica">
-            <span>Avaliação</span>
-            <strong>★ {{ produto.Avaliações ?? produto.avaliacao }}</strong>
-          </div>
-
-          <div class="caracteristica">
-            <span>Código do produto</span>
-            <strong>#{{ produto.id }}</strong>
-          </div>
-
         </div>
 
+        <div v-if="produto.detalhes">
+          <h2 class="h4">Detalhes do colecionável</h2>
+          <p>{{ produto.detalhes }}</p>
+        </div>
       </section>
 
-    </section>
+      <section class="comentarios-area">
 
+        <div class="mb-4">
+          <h2 class="h3 fw-bold">Comentários</h2>
+          <p class="text-muted">
+            Somente clientes cadastrados que compraram este Funko podem comentar.
+          </p>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+
+            <h3 class="h5 mb-3">Verificar minha compra</h3>
+
+            <form class="row g-2" @submit.prevent="conferirCompra">
+
+              <div class="col-md-8">
+                <label for="email-comentario" class="form-label">
+                  E-mail do cadastro
+                </label>
+
+                <input
+                  id="email-comentario"
+                  v-model="email"
+                  type="email"
+                  class="form-control"
+                  placeholder="seuemail@email.com"
+                  required
+                />
+              </div>
+
+              <div class="col-md-4 d-flex align-items-end">
+                <button
+                  class="btn btn-danger w-100"
+                  type="submit"
+                  :disabled="verificando"
+                >
+                  {{ verificando ? 'Verificando...' : 'Verificar compra' }}
+                </button>
+              </div>
+
+            </form>
+
+            <p v-if="mensagemAcesso" class="mt-3 mb-0">
+              {{ mensagemAcesso }}
+            </p>
+
+          </div>
+        </div>
+
+        <div v-if="usuarioAtual" class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-4">
+
+            <h3 class="h5">
+              {{ comentarioEditando ? 'Editar comentário' : 'Escrever comentário' }}
+            </h3>
+
+            <form @submit.prevent="salvarComentario">
+
+              <textarea
+                v-model="textoComentario"
+                class="form-control"
+                rows="4"
+                maxlength="300"
+                placeholder="Conte o que achou deste Funko..."
+              ></textarea>
+
+              <div class="d-flex justify-content-between align-items-center mt-2">
+                <small class="text-muted">
+                  {{ textoComentario.length }}/300 caracteres
+                </small>
+
+                <div class="d-flex gap-2">
+
+                  <button
+                    v-if="comentarioEditando"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    @click="comentarioEditando = null; textoComentario = ''"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    class="btn btn-danger"
+                    type="submit"
+                    :disabled="salvando"
+                  >
+                    {{ salvando ? 'Salvando...' : comentarioEditando ? 'Atualizar' : 'Publicar' }}
+                  </button>
+
+                </div>
+              </div>
+
+            </form>
+
+            <p v-if="mensagemComentario" class="mt-3 mb-0">
+              {{ mensagemComentario }}
+            </p>
+
+          </div>
+        </div>
+
+        <p v-if="comentarios.length === 0" class="text-muted">
+          Ainda não há comentários para este Funko.
+        </p>
+
+        <article
+          v-for="comentario in comentarios"
+          :key="comentario.id"
+          class="card border-0 shadow-sm mb-3"
+        >
+          <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
+              <strong>{{ comentario.usuarioNome }}</strong>
+              <small class="text-muted">
+                {{ formatarData(comentario.dataAtualizacao || comentario.dataCriacao) }}
+              </small>
+            </div>
+
+            <p class="mb-3" style="white-space: pre-wrap">
+              {{ comentario.texto }}
+            </p>
+
+            <div
+              v-if="usuarioAtual && String(comentario.usuarioId) === String(usuarioAtual.id)"
+              class="d-flex gap-2"
+            >
+              <button
+                class="btn btn-sm btn-outline-primary"
+                type="button"
+                @click="editarComentario(comentario)"
+              >
+                <i class="bi bi-pencil me-1"></i>
+                Editar
+              </button>
+
+              <button
+                class="btn btn-sm btn-outline-danger"
+                type="button"
+                @click="removerComentario(comentario)"
+              >
+                <i class="bi bi-trash me-1"></i>
+                Excluir
+              </button>
+            </div>
+
+          </div>
+        </article>
+
+      </section>
+    </div>
   </main>
 </template>
 
 <style scoped>
-.detalhes-produto {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 40px 25px;
-  color: #252525;
-}
-
-.mensagem {
-  min-height: 350px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  text-align: center;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #6F4E37;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.botao-voltar,
-.botao-acao {
-  border: none;
-  background: none;
-  color: #6F4E37;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 15px;
-  padding: 0;
-}
-
-.botao-voltar {
-  margin-bottom: 30px;
-}
-
-.botao-acao {
-  background: #6F4E37;
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-
-.produto-conteudo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: center;
-}
-
 .produto-imagem {
-  background: #f5f3ef;
-  border-radius: 18px;
-  min-height: 450px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 35px;
+  min-height: 300px;
+  background: #fff3ec;
 }
 
 .produto-imagem img {
-  width: 100%;
-  max-width: 370px;
-  height: 380px;
+  max-height: 380px;
   object-fit: contain;
 }
 
-.produto-categoria {
-  color: #8B5E3C;
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-}
-
-.produto-informacoes h1 {
-  font-size: 34px;
-  margin: 15px 0;
-  color: #1a1a1a;
-}
-
-.personagem {
-  color: #777;
-  font-size: 15px;
-}
-
-.descricao {
-  color: #555;
-  line-height: 1.7;
-  margin: 25px 0;
-}
-
-.avaliacao {
-  color: #555;
-  font-weight: 600;
-  margin-bottom: 20px;
-}
-
-.avaliacao span {
-  color: #e5a42b;
-  font-size: 22px;
-}
-
-.preco {
-  font-size: 32px;
-  color: #6F4E37;
-  margin-bottom: 12px;
-}
-
-.estoque {
-  color: #39834a;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.sem-estoque {
-  color: #c0392b;
-}
-
-.produto-secao-texto {
-  margin-top: 65px;
-  padding: 35px 0;
-  border-top: 1px solid #e8e5df;
-}
-
-.produto-secao-texto h2,
-.produto-caracteristicas h2 {
-  font-size: 23px;
-  margin-bottom: 18px;
-  color: #222;
-}
-
-.produto-secao-texto p {
-  color: #666;
-  font-size: 15px;
-  line-height: 1.9;
-  margin-bottom: 25px;
-}
-
-.produto-caracteristicas {
-  border-top: 1px solid #e8e5df;
-  padding: 35px 0;
-}
-
-.caracteristicas-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-}
-
-.caracteristica {
-  background: #f7f5f1;
-  border-radius: 10px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.caracteristica span {
-  color: #888;
-  font-size: 13px;
-}
-
-.caracteristica strong {
-  font-size: 16px;
-  color: #333;
-}
-
-@media (max-width: 768px) {
-  .produto-conteudo {
-    grid-template-columns: 1fr;
-    gap: 30px;
-  }
-
-  .produto-imagem {
-    min-height: 320px;
-  }
-
-  .produto-imagem img {
-    height: 280px;
-  }
-
-  .produto-informacoes h1 {
-    font-size: 27px;
-  }
-
-  .caracteristicas-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 450px) {
-  .caracteristicas-grid {
-    grid-template-columns: 1fr;
-  }
+.comentarios-area {
+  max-width: 900px;
+  margin: 0 auto;
 }
 </style>
-

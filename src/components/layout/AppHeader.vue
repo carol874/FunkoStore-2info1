@@ -34,18 +34,8 @@ onBeforeUnmount(() => {
   >
     <div class="container-fluid">
 
-      <RouterLink
-        class="navbar-brand fw-bold"
-        to="/"
-      >
-         <a>
-             <i class="bi bi-bag-heart-fill fs-2 ">
-                FunkoStore
-             </i>
-         </a>
-      
-
-      
+      <RouterLink class="navbar-brand fw-bold" to="/">
+        <i class="bi bi-bag-heart-fill fs-2"> FunkoStore</i>
       </RouterLink>
 
       <button

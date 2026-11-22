@@ -69,13 +69,13 @@ function imagemIndisponivel(evento) {
   evento.currentTarget.hidden = true;
 }
 
-function adicionarFunko(funko) {
+async function adicionarFunko(funko) {
   mensagemErro.value = '';
   mensagemSucesso.value = '';
   adicionandoId.value = funko.id;
 
   try {
-    adicionarAoCarrinho(funko);
+    await adicionarAoCarrinho(funko);
     mensagemSucesso.value = `${funko.nome} foi adicionado ao carrinho.`;
   } catch (erro) {
     console.error('Erro ao adicionar Funko ao carrinho:', erro);
