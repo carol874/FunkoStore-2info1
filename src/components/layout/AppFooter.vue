@@ -1,7 +1,7 @@
 <template>
   <footer class="app-footer mt-5">
     <div class="container py-4 text-center text-white">
-      <small>FunkoStore • CRUD de usuários com Supabase</small>
+      <small>FunkoStore</small>
     </div>
   </footer>
 </template>

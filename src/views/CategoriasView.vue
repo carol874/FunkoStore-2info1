@@ -8,6 +8,7 @@ import {
   listarCategorias,
   listarProdutosPorCategoria,
 } from '@/services/categorias';
+import { atualizarFunko } from '@/services/funkos';
 
 const categorias = ref([]);
 const formulario = ref({ nome: '', descricao: '' });
@@ -16,6 +17,7 @@ const carregando = ref(true);
 const salvando = ref(false);
 const erro = ref('');
 const sucesso = ref('');
+const funkosPorCategoria = ref({});
 
 async function carregarCategorias() {
   erro.value = '';
@@ -23,6 +25,15 @@ async function carregarCategorias() {
 
   try {
     categorias.value = await listarCategorias();
+
+    const resultados = await Promise.all(
+      categorias.value.map(async (categoria) => [
+        String(categoria.id),
+        await listarProdutosPorCategoria(categoria.id),
+      ]),
+    );
+
+    funkosPorCategoria.value = Object.fromEntries(resultados);
   } catch (error) {
     console.error('Erro ao carregar categorias:', error);
     erro.value = error.message || 'Não foi possível carregar as categorias.';
@@ -97,6 +108,11 @@ async function removerCategoria(categoria) {
   erro.value = '';
   sucesso.value = '';
 
+  if (categoria.nome.trim().toLocaleLowerCase('pt-BR') === 'geral') {
+    erro.value = 'A categoria Geral não pode ser excluída.';
+    return;
+  }
+
   if (!window.confirm(`Deseja excluir a categoria "${categoria.nome}"?`)) {
     return;
   }
@@ -105,15 +121,32 @@ async function removerCategoria(categoria) {
     const produtos = await listarProdutosPorCategoria(categoria.id);
 
     if (produtos.length > 0) {
-      erro.value = `A categoria "${categoria.nome}" está vinculada a ${produtos.length} Funko(s). Altere a categoria desses produtos antes de excluí-la.`;
-      return;
+      const categoriaGeral = categorias.value.find(
+        (item) => item.nome.trim().toLocaleLowerCase('pt-BR') === 'geral',
+      );
+
+      if (!categoriaGeral) {
+        throw new Error('Não foi possível encontrar a categoria Geral.');
+      }
+
+      await Promise.all(
+        produtos.map((produto) =>
+          atualizarFunko(produto.id, {
+            categoriaId: categoriaGeral.id,
+          }),
+        ),
+      );
     }
 
     await excluirCategoria(categoria.id);
     categorias.value = categorias.value.filter(
       (item) => String(item.id) !== String(categoria.id),
     );
-    sucesso.value = 'Categoria excluída com sucesso.';
+    await carregarCategorias();
+    sucesso.value =
+      produtos.length > 0
+        ? `Categoria excluída. ${produtos.length} Funko(s) foram movidos para Geral.`
+        : 'Categoria excluída com sucesso.';
 
     if (String(categoriaEditando.value) === String(categoria.id)) {
       limparFormulario();
@@ -122,6 +155,13 @@ async function removerCategoria(categoria) {
     console.error('Erro ao excluir categoria:', error);
     erro.value = error.message || 'Não foi possível excluir a categoria.';
   }
+}
+
+function formatarPreco(preco) {
+  return Number(preco || 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 }
 
 onMounted(carregarCategorias);
@@ -247,6 +287,46 @@ onMounted(carregarCategorias);
             </tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <section v-if="Object.keys(funkosPorCategoria).length > 0" class="mt-5">
+      <h2 class="h4 mb-3">Funkos por categoria</h2>
+
+      <div v-for="(produtos, idCategoria) in funkosPorCategoria" :key="idCategoria" class="mb-4">
+        <h3 class="h5">{{ categorias.find(c => String(c.id) === String(idCategoria))?.nome }}</h3>
+
+        <div class="row row-cols-2 row-cols-md-3 g-3">
+          <div
+            v-for="produto in produtos"
+            :key="produto.id"
+            class="col d-flex"
+          >
+            <article class="card border-0 shadow-sm w-100">
+              <img
+                v-if="produto.imagem"
+                :src="produto.imagem"
+                :alt="produto.nome"
+                class="card-img-top"
+                style="height: 220px; object-fit: contain; background: #f8f9fa;"
+              />
+              <div class="card-body">
+                <h4 class="h6 card-title mb-2">{{ produto.nome }}</h4>
+                <p class="text-primary fw-bold mb-2">{{ formatarPreco(produto.preco) }}</p>
+                <RouterLink
+                  class="btn btn-sm btn-outline-primary"
+                  :to="{ name: 'detalhesFunkos', params: { id: produto.id } }"
+                >
+                  Ver detalhes
+                </RouterLink>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <p v-if="produtos.length === 0" class="text-body-secondary">
+          Nenhum Funko nessa categoria.
+        </p>
       </div>
     </section>
   </main>

@@ -1,18 +1,5 @@
 {
-  "carrinhos": [
-    {
-      "funkoId": "23",
-      "quantidade": 1,
-      "dataAdicao": "2026-11-21T21:29:18.165Z",
-      "id": "XXl_-Nq1IzU"
-    },
-    {
-      "funkoId": "9",
-      "quantidade": 1,
-      "dataAdicao": "2026-11-24T06:54:33.948Z",
-      "id": "3ajOGDZJWgo"
-    }
-  ],
+  "carrinhos": [],
   "usuarios": [
     {
       "id": "1",
@@ -111,7 +98,7 @@
       "estoque": 10,
       "vendas": 5,
       "Avaliações": "4.7",
-      "categoriaId": 1
+      "categoriaId": "1"
     },
     {
       "id": "2",
@@ -261,7 +248,7 @@
       "estoque": 14,
       "vendas": 20,
       "Avaliações": "4.9",
-      "categoriaId": 1
+      "categoriaId": "1"
     },
     {
       "id": "12",
