@@ -1,16 +1,23 @@
-﻿<script setup>
+﻿
+<script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import UsuarioForm from '../components/usuario/UsuarioForm.vue';
 import { criarUsuario } from '../services/usuarioService';
+import { RouterLink } from 'vue-router';
+import { cadastrarUsuario } from '@/services/usuarios';
+
+defineOptions({ name: 'AddUsuario' });
 
 const router = useRouter();
+
 const formulario = ref({
   nome: '',
   email: '',
   senha: '',
   telefone: '',
 });
+
 const submitting = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
@@ -39,6 +46,7 @@ async function handleSubmit({ valid, payload, errors }) {
   } catch (error) {
     const message = error?.message || 'Erro ao cadastrar usuário.';
     const normalizedMessage = message.toLowerCase();
+
     if (
       normalizedMessage.includes('duplicate') ||
       normalizedMessage.includes('already registered') ||
@@ -51,19 +59,15 @@ async function handleSubmit({ valid, payload, errors }) {
     errorMessage.value = message;
   } finally {
     submitting.value = false;
-<script setup>
-import { ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
-import { cadastrarUsuario } from '@/services/usuarios';
+  }
+}
 
-defineOptions({ name: 'AddUsuario' });
-
-const router = useRouter();
 const usuario = ref({
   nome: '',
   email: '',
   telefone: '',
 });
+
 const salvando = ref(false);
 const mensagemErro = ref('');
 const mensagemSucesso = ref('');
@@ -77,10 +81,17 @@ async function enviarCadastro() {
 
   try {
     const novoUsuario = await cadastrarUsuario(usuario.value);
+
     mensagemSucesso.value = `Cadastro realizado com sucesso para ${novoUsuario.nome}.`;
-    usuario.value = { nome: '', email: '', telefone: '' };
+
+    usuario.value = {
+      nome: '',
+      email: '',
+      telefone: '',
+    };
   } catch (erro) {
     console.error('Erro ao cadastrar usuário:', erro);
+
     mensagemErro.value =
       erro.message || 'Não foi possível realizar o cadastro.';
   } finally {
@@ -95,12 +106,20 @@ async function enviarCadastro() {
       <div class="col-lg-8">
         <div class="card shadow-sm">
           <div class="card-body p-4">
+
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
               <div>
                 <h1 class="mb-1">Cadastro de usuário</h1>
-                <p class="text-muted mb-0">Crie uma conta usando o Supabase Auth.</p>
+                <p class="text-muted mb-0">
+                  Crie uma conta usando o Supabase Auth.
+                </p>
               </div>
-              <button class="btn btn-outline-secondary" @click="router.push({ name: 'usuariosList' })">
+
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                @click="router.push({ name: 'usuariosList' })"
+              >
                 Voltar para listagem
               </button>
             </div>
@@ -119,14 +138,17 @@ async function enviarCadastro() {
               mode="create"
               @submit="handleSubmit"
             />
+
           </div>
         </div>
       </div>
     </div>
   </main>
+
   <section class="container py-5">
     <div class="row justify-content-center">
       <div class="col-lg-7 col-xl-6">
+
         <header class="mb-4">
           <h1 class="h2 fw-bold mb-1">Cadastro</h1>
           <p class="text-body-secondary mb-0">
@@ -134,24 +156,16 @@ async function enviarCadastro() {
           </p>
         </header>
 
-        <div
-          v-if="mensagemErro"
-          class="alert alert-danger"
-          role="alert"
-        >
+        <div v-if="mensagemErro" class="alert alert-danger" role="alert">
           {{ mensagemErro }}
         </div>
-        <div
-          v-if="mensagemSucesso"
-          class="alert alert-success"
-          role="status"
-        >
+
+        <div v-if="mensagemSucesso" class="alert alert-success" role="status">
           {{ mensagemSucesso }}
-          <RouterLink
-            class="alert-link ms-1"
-            to="/pedidos"
-            >Ver pedidos</RouterLink
-          >
+
+          <RouterLink class="alert-link ms-1" to="/pedidos">
+            Ver pedidos
+          </RouterLink>
         </div>
 
         <form
@@ -159,12 +173,12 @@ async function enviarCadastro() {
           @submit.prevent="enviarCadastro"
         >
           <div class="card-body p-4">
+
             <div class="mb-3">
-              <label
-                class="form-label"
-                for="cadastro-nome"
-                >Nome completo</label
-              >
+              <label class="form-label" for="cadastro-nome">
+                Nome completo
+              </label>
+
               <input
                 id="cadastro-nome"
                 v-model="usuario.nome"
@@ -177,11 +191,10 @@ async function enviarCadastro() {
             </div>
 
             <div class="mb-3">
-              <label
-                class="form-label"
-                for="cadastro-email"
-                >E-mail</label
-              >
+              <label class="form-label" for="cadastro-email">
+                E-mail
+              </label>
+
               <input
                 id="cadastro-email"
                 v-model="usuario.email"
@@ -194,12 +207,11 @@ async function enviarCadastro() {
             </div>
 
             <div class="mb-4">
-              <label
-                class="form-label"
-                for="cadastro-telefone"
-              >
-                Telefone <span class="text-body-secondary">(opcional)</span>
+              <label class="form-label" for="cadastro-telefone">
+                Telefone
+                <span class="text-body-secondary">(opcional)</span>
               </label>
+
               <input
                 id="cadastro-telefone"
                 v-model="usuario.telefone"
@@ -228,8 +240,10 @@ async function enviarCadastro() {
                   class="spinner-border spinner-border-sm me-1"
                   aria-hidden="true"
                 ></span>
+
                 {{ salvando ? 'Cadastrando...' : 'Criar cadastro' }}
               </button>
+
               <button
                 v-if="mensagemSucesso"
                 class="btn btn-outline-secondary"
@@ -239,6 +253,7 @@ async function enviarCadastro() {
                 Voltar ao início
               </button>
             </div>
+
           </div>
         </form>
       </div>

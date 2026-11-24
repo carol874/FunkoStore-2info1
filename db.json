@@ -5,6 +5,12 @@
       "quantidade": 1,
       "dataAdicao": "2026-11-21T21:29:18.165Z",
       "id": "XXl_-Nq1IzU"
+    },
+    {
+      "funkoId": "9",
+      "quantidade": 1,
+      "dataAdicao": "2026-11-24T06:54:33.948Z",
+      "id": "3ajOGDZJWgo"
     }
   ],
   "usuarios": [
@@ -993,98 +999,6 @@
       "categoriaId": 1
     }
   ],
-  "Pedidos": [
-    {
-      "id": "1",
-      "nome": "Funko Homem-Aranha",
-      "preco": 249.9,
-      "emEstoque": true
-    },
-    {
-      "id": "2",
-      "nome": "Funko Mob Psycho",
-      "preco": 89.5,
-      "emEstoque": true
-    },
-    {
-      "id": "3",
-      "nome": "Funko Batman (The Batman)",
-      "preco": 149.9,
-      "emEstoque": true
-    },
-    {
-      "id": "4",
-      "nome": "Funko Iron Man Mark 85",
-      "preco": 159.9,
-      "emEstoque": false
-    },
-    {
-      "id": "5",
-      "nome": "Funko Pikachu",
-      "preco": 119.9,
-      "emEstoque": true
-    },
-    {
-      "id": "6",
-      "nome": "Funko Naruto Uzumaki (Sexy Jutsu)",
-      "preco": 189.9,
-      "emEstoque": true
-    },
-    {
-      "id": "7",
-      "nome": "Funko Darth Vader",
-      "preco": 139.9,
-      "emEstoque": false
-    },
-    {
-      "id": "8",
-      "nome": "Funko Baby Yoda (The Child)",
-      "preco": 169.9,
-      "emEstoque": true
-    },
-    {
-      "id": "9",
-      "nome": "Funko Harry Potter com Edwiges",
-      "preco": 145,
-      "emEstoque": true
-    },
-    {
-      "id": "10",
-      "nome": "Funko Eleven (Stranger Things)",
-      "preco": 129.9,
-      "emEstoque": true
-    },
-    {
-      "id": "11",
-      "nome": "Funko Luffy (One Piece)",
-      "preco": 219.9,
-      "emEstoque": false
-    },
-    {
-      "id": "12",
-      "nome": "Funko Tanjiro Kamado (Demon Slayer)",
-      "preco": 154.9,
-      "emEstoque": true
-    },
-    {
-      "id": "13",
-      "nome": "Funko Goku Super Saiyan",
-      "preco": 134.9,
-      "emEstoque": true
-    },
-    {
-      "id": "14",
-      "nome": "Funko Wednesday Addams",
-      "preco": 179.9,
-      "emEstoque": true
-    },
-    {
-      "id": "15",
-      "nome": "Funko Sonic the Hedgehog",
-      "preco": 124.9,
-      "emEstoque": false
-    }
-  ],
   "pedidos": [
     {
       "dataPedido": "2026-11-13T19:02:07.474Z",
@@ -1119,6 +1033,6 @@
       "id": "iphKEOlwkSQ"
     }
   ],
-  "$schema": "./node_modules/json-server/schema.json",
-  "comentarios": []
+  "comentarios": [],
+  "$schema": "./node_modules/json-server/schema.json"
 }

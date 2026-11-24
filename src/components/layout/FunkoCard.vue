@@ -9,7 +9,12 @@ const props = defineProps({
   }
 });
 
-// Helper de formatação de preço seguro
+
+const emit = defineEmits(['remover']);
+
+function removerProduto() {
+  emit('remover', props.produto.id);
+}
 const precoFormatado = computed(() => {
   const valor = Number(props.produto?.preco) || 0;
   return valor.toLocaleString('pt-BR', {
@@ -18,7 +23,6 @@ const precoFormatado = computed(() => {
   });
 });
 
-// Avaliação normalizada (suporta diferentes chaves da API)
 const avaliacaoFormatada = computed(() => {
   return props.produto?.['Avaliações'] ?? props.produto?.avaliacao ?? 'N/A';
 });
@@ -27,7 +31,6 @@ const avaliacaoFormatada = computed(() => {
 <template>
   <article class="produto-card">
 
-    <!-- Imagem e Badges -->
     <div class="produto-imagem">
       <img
         :src="produto.imagem"
@@ -39,13 +42,11 @@ const avaliacaoFormatada = computed(() => {
         #{{ produto.id }}
       </span>
 
-      <!-- Badge de Indisponível se o estoque for zero -->
       <span v-if="produto.estoque === 0" class="badge-esgotado">
         Esgotado
       </span>
     </div>
 
-    <!-- Conteúdo Principal -->
     <div class="produto-conteudo">
 
       <h2>{{ produto.nome }}</h2>
@@ -64,7 +65,7 @@ const avaliacaoFormatada = computed(() => {
 
       <div class="divisor"></div>
 
-      <!-- Informações Comerciais -->
+
       <div class="produto-dados">
         <div>
           <span>Estoque</span>
@@ -84,14 +85,12 @@ const avaliacaoFormatada = computed(() => {
 
       <div class="divisor"></div>
 
-      <!-- Ação / Detalhes Rápidos -->
       <div class="produto-footer">
         <RouterLink
           v-if="produto.id"
           :to="{ name: 'detalhes-produto', params: { id: produto.id } }"
           class="btn-detalhes"
         >
-          Ver Detalhes →
         </RouterLink>
       </div>
 

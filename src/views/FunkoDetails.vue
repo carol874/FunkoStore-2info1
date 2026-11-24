@@ -1,18 +1,9 @@
-<template>
-  <main class="container py-5">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h1 class="mb-3">Detalhes do Funko</h1>
-        <p class="text-muted">Esta página foi criada para manter a rota do projeto funcional.</p>
-      </div>
-    </div>
-  </main>
-</template>
-
 <script setup>
 import { ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
-import { API_URL } from '@/services/categorias';
+import { API_URL, listarCategorias } from '@/services/categorias';
+import { atualizarFunko } from '@/services/funkos';
+
 import {
   atualizarComentario,
   criarComentario,
@@ -38,10 +29,22 @@ const comentarioEditando = ref(null);
 const salvando = ref(false);
 const mensagemComentario = ref('');
 
+
+const categorias = ref([]);
+const modalAberto = ref(false);
+const salvandoProduto = ref(false);
+const mensagemProduto = ref('');
+const formProduto = ref({});
+
 async function carregarDados() {
   carregando.value = true;
   erro.value = '';
+
+  produto.value = null;
+  comentarios.value = [];
   usuarioAtual.value = null;
+  comentarioEditando.value = null;
+  textoComentario.value = '';
 
   try {
     const resposta = await fetch(`${API_URL}/produtos/${route.params.id}`);
@@ -59,6 +62,55 @@ async function carregarDados() {
   }
 }
 
+async function abrirModalProduto() {
+  mensagemProduto.value = '';
+  formProduto.value = { ...produto.value };
+  modalAberto.value = true;
+
+  if (categorias.value.length === 0) {
+    try {
+      categorias.value = await listarCategorias();
+    } catch {
+      /* o select fica vazio, mas o resto continua funcionando */
+    }
+  }
+}
+
+function fecharModalProduto() {
+  modalAberto.value = false;
+}
+
+async function salvarProduto() {
+  mensagemProduto.value = '';
+
+  if (!formProduto.value.nome?.trim()) {
+    mensagemProduto.value = 'Informe o nome.';
+    return;
+  }
+
+  if (Number(formProduto.value.preco) < 0 || Number(formProduto.value.estoque) < 0) {
+    mensagemProduto.value = 'Preço e estoque não podem ser negativos.';
+    return;
+  }
+
+  salvandoProduto.value = true;
+
+  try {
+    const dados = {
+      ...formProduto.value,
+      preco: Number(formProduto.value.preco),
+      estoque: Number(formProduto.value.estoque),
+    };
+
+    produto.value = await atualizarFunko(route.params.id, dados);
+    modalAberto.value = false;
+  } catch (erroProduto) {
+    mensagemProduto.value = erroProduto.message;
+  } finally {
+    salvandoProduto.value = false;
+  }
+}
+
 async function conferirCompra() {
   mensagemAcesso.value = '';
   usuarioAtual.value = null;
@@ -73,7 +125,8 @@ async function conferirCompra() {
     const usuario = await verificarCompra(email.value, route.params.id);
 
     if (!usuario) {
-      mensagemAcesso.value = 'Não encontramos uma compra deste Funko para este cadastro.';
+      mensagemAcesso.value =
+        'Não encontramos uma compra deste Funko para este cadastro.';
       return;
     }
 
@@ -86,7 +139,8 @@ async function conferirCompra() {
     if (existente) {
       comentarioEditando.value = existente.id;
       textoComentario.value = existente.texto;
-      mensagemAcesso.value = 'Você já comentou. Pode editar seu comentário.';
+      mensagemAcesso.value =
+        'Você já comentou. Pode editar seu comentário.';
     } else {
       comentarioEditando.value = null;
       textoComentario.value = '';
@@ -113,7 +167,8 @@ async function salvarComentario() {
   }
 
   if (textoComentario.value.length > 300) {
-    mensagemComentario.value = 'O comentário pode ter no máximo 300 caracteres.';
+    mensagemComentario.value =
+      'O comentário pode ter no máximo 300 caracteres.';
     return;
   }
 
@@ -199,6 +254,7 @@ watch(() => route.params.id, carregarDados, { immediate: true });
 
     <div v-else-if="erro" class="alert alert-danger">
       {{ erro }}
+
       <div class="mt-3">
         <RouterLink to="/" class="btn btn-outline-danger">
           Voltar para a loja
@@ -223,6 +279,7 @@ watch(() => route.params.id, carregarDados, { immediate: true });
               :alt="produto.nome"
               class="img-fluid"
             />
+
             <i v-else class="bi bi-box-seam display-1"></i>
           </div>
         </div>
@@ -245,11 +302,17 @@ watch(() => route.params.id, carregarDados, { immediate: true });
           <p class="text-muted">
             {{ produto.estoque }} unidades disponíveis
           </p>
+
+          <button class="btn btn-outline-primary mt-2" type="button" @click="abrirModalProduto">
+            <i class="bi bi-pencil-square me-1"></i>
+            Editar produto
+          </button>
         </div>
 
       </div>
 
       <section v-if="produto.informacoes || produto.detalhes" class="mb-5">
+
         <div v-if="produto.informacoes" class="mb-4">
           <h2 class="h4">Sobre o produto</h2>
           <p>{{ produto.informacoes }}</p>
@@ -259,12 +322,14 @@ watch(() => route.params.id, carregarDados, { immediate: true });
           <h2 class="h4">Detalhes do colecionável</h2>
           <p>{{ produto.detalhes }}</p>
         </div>
+
       </section>
 
       <section class="comentarios-area">
 
         <div class="mb-4">
           <h2 class="h3 fw-bold">Comentários</h2>
+
           <p class="text-muted">
             Somente clientes cadastrados que compraram este Funko podem comentar.
           </p>
@@ -329,6 +394,7 @@ watch(() => route.params.id, carregarDados, { immediate: true });
               ></textarea>
 
               <div class="d-flex justify-content-between align-items-center mt-2">
+
                 <small class="text-muted">
                   {{ textoComentario.length }}/300 caracteres
                 </small>
@@ -377,6 +443,7 @@ watch(() => route.params.id, carregarDados, { immediate: true });
 
             <div class="d-flex justify-content-between flex-wrap gap-2 mb-2">
               <strong>{{ comentario.usuarioNome }}</strong>
+
               <small class="text-muted">
                 {{ formatarData(comentario.dataAtualizacao || comentario.dataCriacao) }}
               </small>
@@ -414,13 +481,103 @@ watch(() => route.params.id, carregarDados, { immediate: true });
 
       </section>
     </div>
+
+    <div v-if="modalAberto" class="modal-fundo" @click.self="fecharModalProduto">
+      <div class="modal-caixa card border-0 shadow">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="h5 mb-0">Editar produto</h3>
+            <button class="btn-close" type="button" aria-label="Fechar" @click="fecharModalProduto"></button>
+          </div>
+
+          <form class="row g-3" @submit.prevent="salvarProduto">
+            <div class="col-md-8">
+              <label class="form-label" for="p-nome">Nome</label>
+              <input id="p-nome" v-model="formProduto.nome" class="form-control" required />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="p-personagem">Personagem</label>
+              <input id="p-personagem" v-model="formProduto.personagem" class="form-control" />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="p-preco">Preço (R$)</label>
+              <input id="p-preco" v-model="formProduto.preco" type="number" min="0" step="0.01" class="form-control" required />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="p-estoque">Estoque</label>
+              <input id="p-estoque" v-model="formProduto.estoque" type="number" min="0" step="1" class="form-control" required />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label" for="p-categoria">Categoria</label>
+              <select id="p-categoria" v-model="formProduto.categoriaId" class="form-select">
+                <option v-for="c in categorias" :key="c.id" :value="c.id">{{ c.nome }}</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="p-imagem">URL da imagem</label>
+              <input id="p-imagem" v-model="formProduto.imagem" class="form-control" />
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="p-descricao">Descrição</label>
+              <textarea id="p-descricao" v-model="formProduto.descricao" rows="2" class="form-control"></textarea>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="p-info">Sobre o produto</label>
+              <textarea id="p-info" v-model="formProduto.informacoes" rows="2" class="form-control"></textarea>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label" for="p-detalhes">Detalhes do colecionável</label>
+              <textarea id="p-detalhes" v-model="formProduto.detalhes" rows="2" class="form-control"></textarea>
+            </div>
+
+            <p v-if="mensagemProduto" class="text-danger mb-0">{{ mensagemProduto }}</p>
+
+            <div class="col-12 d-flex justify-content-end gap-2">
+              <button class="btn btn-outline-secondary" type="button" @click="fecharModalProduto">Cancelar</button>
+              <button class="btn btn-danger" type="submit" :disabled="salvandoProduto">
+                {{ salvandoProduto ? 'Salvando...' : 'Salvar alterações' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
-
 <style scoped>
+/* Fundo da página */
+main {
+  min-height: 100vh;
+  background-color: #fffaf7;
+  color: #493530;
+}
+
+/* Link para voltar */
+.btn-link {
+  color: #bd6658;
+  font-weight: 600;
+}
+
+.btn-link:hover {
+  color: #8f443b;
+}
+
+/* Imagem do produto */
 .produto-imagem {
   min-height: 300px;
-  background: #fff3ec;
+  background-color: #fff0e9;
+  border: 1px solid #f3dfd6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .produto-imagem img {
@@ -428,8 +585,93 @@ watch(() => route.params.id, carregarDados, { immediate: true });
   object-fit: contain;
 }
 
+/* Informações do produto */
+h1 {
+  color: #493530;
+}
+
+h2.text-danger,
+.text-danger {
+  color: #c65e50 !important;
+}
+
+.text-muted {
+  color: #907d76 !important;
+}
+
+/* Seções */
+section {
+  margin-bottom: 35px;
+}
+
+section h2 {
+  font-weight: 700;
+}
+
+/* Cartões */
+.card {
+  border-radius: 12px;
+  border: 1px solid #f0e2dc !important;
+  background-color: #fff;
+}
+
+/* Formulários */
+.form-control {
+  border: 1px solid #e8d8d1;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.form-control:focus {
+  border-color: #e99582;
+  box-shadow: 0 0 0 0.2rem rgba(255, 160, 122, 0.2);
+}
+
+/* Botões */
+.btn-danger {
+  background-color: #d87565;
+  border-color: #d87565;
+}
+
+.btn-danger:hover {
+  background-color: #b9574b;
+  border-color: #b9574b;
+}
+
+.btn-outline-primary {
+  color: #b96b5e;
+  border-color: #dba093;
+}
+
+.btn-outline-primary:hover {
+  background-color: #d87565;
+  border-color: #d87565;
+  color: white;
+}
+
+/* Comentários */
 .comentarios-area {
   max-width: 900px;
   margin: 0 auto;
 }
+
+.comentarios-area article {
+  transition: box-shadow 0.2s ease;
+}
+
+.comentarios-area article:hover {
+  box-shadow: 0 4px 14px rgba(90, 50, 40, 0.08) !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .produto-imagem {
+    min-height: 240px;
+  }
+
+  .produto-imagem img {
+    max-height: 300px;
+  }
+}
 </style>
+

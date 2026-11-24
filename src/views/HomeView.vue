@@ -1,15 +1,9 @@
 <script setup>
-</script>
-
-<template>
-  <main class="container py-5">
-    <h1>Bem-vindo à FunkoStore</h1>
-  </main>
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { adicionarAoCarrinho } from '@/services/carrinho';
 import { listarCategorias } from '@/services/categorias';
-import { listarFunkos } from '@/services/funkos';
+import { excluirFunko, listarFunkos } from '@/services/funkos';
 
 const funkos = ref([]);
 const categorias = ref([]);
@@ -19,6 +13,7 @@ const mensagemSucesso = ref('');
 const busca = ref('');
 const categoriaSelecionada = ref('');
 const adicionandoId = ref(null);
+const removendoId = ref(null);
 
 const funkosFiltrados = computed(() => {
   const termo = busca.value.trim().toLocaleLowerCase('pt-BR');
@@ -29,6 +24,7 @@ const funkosFiltrados = computed(() => {
       `${funko.nome || ''} ${funko.personagem || ''}`
         .toLocaleLowerCase('pt-BR')
         .includes(termo);
+
     const correspondeCategoria =
       !categoriaSelecionada.value ||
       String(funko.categoriaId) === String(categoriaSelecionada.value);
@@ -51,7 +47,8 @@ async function carregarDados() {
     categorias.value = listaCategorias;
   } catch (erro) {
     console.error('Erro ao carregar a página inicial:', erro);
-    mensagemErro.value = erro.message || 'Não foi possível carregar os Funkos.';
+    mensagemErro.value =
+      erro.message || 'Não foi possível carregar os Funkos.';
   } finally {
     carregando.value = false;
   }
@@ -59,8 +56,9 @@ async function carregarDados() {
 
 function nomeCategoria(id) {
   return (
-    categorias.value.find((categoria) => String(categoria.id) === String(id))
-      ?.nome || 'Sem categoria'
+    categorias.value.find(
+      (categoria) => String(categoria.id) === String(id)
+    )?.nome || 'Sem categoria'
   );
 }
 
@@ -85,9 +83,40 @@ async function adicionarFunko(funko) {
     mensagemSucesso.value = `${funko.nome} foi adicionado ao carrinho.`;
   } catch (erro) {
     console.error('Erro ao adicionar Funko ao carrinho:', erro);
-    mensagemErro.value = erro.message || 'Não foi possível adicionar ao carrinho.';
+    mensagemErro.value =
+      erro.message || 'Não foi possível adicionar ao carrinho.';
   } finally {
     adicionandoId.value = null;
+  }
+}
+
+async function removerFunko(funko) {
+  if (
+    !window.confirm(
+      `Deseja remover "${funko.nome}"? Essa ação não pode ser desfeita.`
+    )
+  ) {
+    return;
+  }
+
+  mensagemErro.value = '';
+  mensagemSucesso.value = '';
+  removendoId.value = funko.id;
+
+  try {
+    await excluirFunko(funko.id);
+
+    funkos.value = funkos.value.filter(
+      (item) => String(item.id) !== String(funko.id)
+    );
+
+    mensagemSucesso.value = `${funko.nome} foi removido.`;
+  } catch (erro) {
+    console.error('Erro ao remover Funko:', erro);
+    mensagemErro.value =
+      erro.message || 'Não foi possível remover o Funko.';
+  } finally {
+    removendoId.value = null;
   }
 }
 
@@ -100,13 +129,17 @@ onMounted(carregarDados);
       <div class="container hero-content">
         <div>
           <span class="hero-eyebrow">Sua coleção começa aqui</span>
+
           <h1>Encontre seu próximo <span>Funko Pop!</span></h1>
+
           <p>Personagens inesquecíveis para dar vida à sua coleção.</p>
+
           <RouterLink class="btn hero-button" :to="{ name: 'addFunkos' }">
             <i class="bi bi-plus-lg" aria-hidden="true"></i>
             Cadastrar Funko
           </RouterLink>
         </div>
+
         <div class="hero-art" aria-hidden="true">
           <i class="bi bi-stars"></i>
           <span>POP!</span>
@@ -121,6 +154,7 @@ onMounted(carregarDados);
           <span class="section-eyebrow">Escolha o seu favorito</span>
           <h2 id="catalog-title">Nossa coleção</h2>
         </div>
+
         <span class="product-count">
           {{ funkosFiltrados.length }}
           {{ funkosFiltrados.length === 1 ? 'produto' : 'produtos' }}
@@ -130,18 +164,28 @@ onMounted(carregarDados);
       <div class="catalog-filters">
         <label class="search-field">
           <i class="bi bi-search" aria-hidden="true"></i>
-          <span class="visually-hidden">Buscar por nome ou personagem</span>
+
+          <span class="visually-hidden">
+            Buscar por nome ou personagem
+          </span>
+
           <input
             v-model="busca"
             type="search"
             placeholder="Buscar por nome ou personagem..."
           />
         </label>
+
         <label class="category-field">
           <i class="bi bi-filter" aria-hidden="true"></i>
-          <span class="visually-hidden">Filtrar por categoria</span>
+
+          <span class="visually-hidden">
+            Filtrar por categoria
+          </span>
+
           <select v-model="categoriaSelecionada">
             <option value="">Todas as categorias</option>
+
             <option
               v-for="categoria in categorias"
               :key="categoria.id"
@@ -155,6 +199,7 @@ onMounted(carregarDados);
 
       <div v-if="mensagemErro" class="alert alert-danger" role="alert">
         {{ mensagemErro }}
+
         <button
           class="btn btn-sm btn-outline-danger ms-2"
           type="button"
@@ -163,33 +208,54 @@ onMounted(carregarDados);
           Tentar novamente
         </button>
       </div>
+
       <div v-if="mensagemSucesso" class="alert alert-success" role="status">
         {{ mensagemSucesso }}
+
         <RouterLink class="alert-link ms-1" to="/carrinho">
           Ver carrinho
         </RouterLink>
       </div>
 
       <div v-if="carregando" class="catalog-message" role="status">
-        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+        <span
+          class="spinner-border spinner-border-sm"
+          aria-hidden="true"
+        ></span>
+
         Carregando Funkos...
       </div>
-      <div v-else-if="!mensagemErro && funkosFiltrados.length === 0" class="catalog-message empty-state">
+
+      <div
+        v-else-if="!mensagemErro && funkosFiltrados.length === 0"
+        class="catalog-message empty-state"
+      >
         <i class="bi bi-search" aria-hidden="true"></i>
+
         <h3>Nenhum Funko encontrado</h3>
+
         <p>Experimente mudar a busca ou o filtro de categoria.</p>
       </div>
+
       <div v-else-if="!mensagemErro" class="product-grid">
-        <article v-for="funko in funkosFiltrados" :key="funko.id" class="product-card">
+        <article
+          v-for="funko in funkosFiltrados"
+          :key="funko.id"
+          class="product-card"
+        >
           <RouterLink
             class="product-image"
             :to="{ name: 'detalhesFunkos', params: { id: funko.id } }"
             :aria-label="`Ver detalhes de ${funko.nome}`"
           >
-            <span class="product-category">{{ nomeCategoria(funko.categoriaId) }}</span>
+            <span class="product-category">
+              {{ nomeCategoria(funko.categoriaId) }}
+            </span>
+
             <span class="image-placeholder" aria-hidden="true">
               <i class="bi bi-box-seam"></i>
             </span>
+
             <img
               v-if="funko.imagem"
               :src="funko.imagem"
@@ -200,25 +266,63 @@ onMounted(carregarDados);
           </RouterLink>
 
           <div class="product-info">
-            <p class="product-character">{{ funko.personagem || 'Funko Pop' }}</p>
+            <p class="product-character">
+              {{ funko.personagem || 'Funko Pop' }}
+            </p>
+
             <h3>{{ funko.nome }}</h3>
-            <p class="product-description">{{ funko.descricao }}</p>
+
+            <p class="product-description">
+              {{ funko.descricao }}
+            </p>
+
             <p class="product-stock">
               <i class="bi bi-box-seam" aria-hidden="true"></i>
-              {{ Number(funko.estoque) > 0 ? `${funko.estoque} em estoque` : 'Indisponível' }}
+
+              {{
+                Number(funko.estoque) > 0
+                  ? `${funko.estoque} em estoque`
+                  : 'Indisponível'
+              }}
             </p>
+
             <div class="product-footer">
               <strong>{{ formatarPreco(funko.preco) }}</strong>
-              <button
-                class="btn btn-sm btn-add-cart"
-                type="button"
-                :disabled="Number(funko.estoque) < 1 || adicionandoId === funko.id"
-                :aria-label="`Adicionar ${funko.nome} ao carrinho`"
-                @click="adicionarFunko(funko)"
-              >
-                <i class="bi bi-cart-plus" aria-hidden="true"></i>
-                {{ adicionandoId === funko.id ? 'Adicionando...' : 'Adicionar' }}
-              </button>
+
+              <div class="product-actions">
+                <button
+                  class="btn btn-sm btn-remove"
+                  type="button"
+                  :disabled="removendoId === funko.id"
+                  :aria-label="`Remover ${funko.nome}`"
+                  :title="`Remover ${funko.nome}`"
+                  @click="removerFunko(funko)"
+                >
+                  <i
+                    :class="removendoId === funko.id ? 'bi bi-hourglass-split' : 'bi bi-trash'"
+                    aria-hidden="true"
+                  ></i>
+                </button>
+
+                <button
+                  class="btn btn-sm btn-add-cart"
+                  type="button"
+                  :disabled="
+                    Number(funko.estoque) < 1 ||
+                    adicionandoId === funko.id
+                  "
+                  :aria-label="`Adicionar ${funko.nome} ao carrinho`"
+                  @click="adicionarFunko(funko)"
+                >
+                  <i class="bi bi-cart-plus" aria-hidden="true"></i>
+
+                  {{
+                    adicionandoId === funko.id
+                      ? 'Adicionando...'
+                      : 'Adicionar'
+                  }}
+                </button>
+              </div>
             </div>
           </div>
         </article>
@@ -526,6 +630,25 @@ onMounted(carregarDados);
 
 .btn-add-cart:disabled {
   background: #b7aaa6;
+  color: white;
+}
+
+.product-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-remove {
+  border: 1px solid #efc4ba;
+  border-radius: 0.75rem;
+  background: white;
+  color: #c0422f;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #c0422f;
+  border-color: #c0422f;
   color: white;
 }
 

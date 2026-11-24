@@ -1,12 +1,4 @@
-<template>
-  <main class="container py-5">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h1 class="mb-3">Adicionar Funko</h1>
-        <p class="text-muted">Esta página foi criada para manter a rota do projeto funcional.</p>
-      </div>
-    </div>
-  </main>
+
 <script setup>
 import { ref } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
@@ -15,10 +7,6 @@ import { API_URL, listarCategorias } from '@/services/categorias';
 const router = useRouter();
 const categorias = ref([]);
 const carregandoCategorias = ref(true);
-
-const API_URL = import.meta.env.DEV
-  ? 'http://localhost:3000'
-  : 'SUA_URL_DA_API';
 
 const novoFunko = ref({
   nome: '',
@@ -30,7 +18,7 @@ const novoFunko = ref({
   preco: '',
   imagem: '',
   estoque: '',
-  vendas: 0, 
+  vendas: 0,
   Avaliações: '',
   categoriaId: '',
 });
@@ -76,7 +64,6 @@ async function salvarFunko() {
       throw new Error('Não foi possível cadastrar o produto. Verifique os dados.');
     }
 
-
     router.push({ name: 'home' });
 
   } catch (erro) {
@@ -103,17 +90,17 @@ carregarCategorias();
       class="btn btn-outline-primary mb-4"
       :to="{ name: 'home' }"
     >
-      ← Voltar para produtos
+
     </RouterLink>
 
-    <!-- Mensagem de erro global -->
+
     <div v-if="mensagemErro" class="alert alert-danger" role="alert">
       {{ mensagemErro }}
     </div>
 
     <form class="row g-3" @submit.prevent="salvarFunko">
 
-      <!-- Identificação -->
+
       <div class="col-12">
         <h2 class="h5 border-bottom pb-2">Identificação do produto</h2>
       </div>
@@ -195,7 +182,6 @@ carregarCategorias();
         />
       </div>
 
-      <!-- Descrições -->
       <div class="col-12 mt-4">
         <h2 class="h5 border-bottom pb-2">Descrições do produto</h2>
       </div>
@@ -265,7 +251,7 @@ carregarCategorias();
         </div>
       </div>
 
-      <!-- Estoque e avaliações -->
+
       <div class="col-12 mt-4">
         <h2 class="h5 border-bottom pb-2">Estoque e avaliações</h2>
       </div>
@@ -309,16 +295,16 @@ carregarCategorias();
         />
       </div>
 
-      <!-- Botões de Ação -->
+
       <div class="col-12 d-flex gap-2 mt-4">
-        <button
-          class="btn btn-success d-flex align-items-center gap-2"
-          type="submit"
-          :disabled="salvando"
-        >
-          <span v-if="salvando" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          {{ salvando ? 'Salvando...' : 'Cadastrar Funko' }}
-        </button>
+<button
+  class="btn btn-salmao d-flex align-items-center gap-2"
+  type="submit"
+  :disabled="salvando"
+>
+  <span v-if="salvando" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+  {{ salvando ? 'Salvando...' : 'Cadastrar Funko' }}
+</button>
 
         <RouterLink
           class="btn btn-outline-secondary"
