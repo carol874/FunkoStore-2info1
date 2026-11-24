@@ -43,6 +43,26 @@ const router = createRouter({
       name: 'detalhesFunkos',
       component: () => import('../views/FunkoDetails.vue'),
     },
+    {
+      path: '/categorias',
+      name: 'categorias',
+      component: () => import('../views/CategoriasView.vue'),
+    },
+    {
+      path: '/carrinho',
+      name: 'carrinho',
+      component: () => import('../views/carrinho/Carrinhoview.vue'),
+    },
+     {
+       path: '/pedidos',
+       name: 'pedidos',
+       component: () => import('../views/PedidosView.vue'),
+     },
+     {
+       path: '/pedidos/:id',
+       name: 'detalhesPedido',
+       component: () => import('../views/PedidoDetalhesView.vue'),
+     },
   ],
 });
 

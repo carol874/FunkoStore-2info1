@@ -94,6 +94,9 @@ Consulte o [guia de estrutura do projeto](./docs/estrutura-projeto.md).
 
 - [Como utilizar o template](./docs/como-utilizar-template.md);
 - [Estrutura do projeto](./docs/estrutura-projeto.md);
+- [CRUD e endpoints de categorias](./docs/api-categorias.md);
+- [Cadastro de usuário e consulta de CEP](./docs/cadastro-e-cep.md);
+- [Pedidos e endpoints](./docs/api-pedidos.md);
 - [Guia de padronização do código](./docs/guia-padronizacao-codigo.md);
 - [Validação do projeto](./docs/validacao-template.md).
 
@@ -135,7 +138,6 @@ Consulte os termos de utilização no arquivo [LICENSE](LICENSE).
 
 ## Entidades
 
-<<<<<<< HEAD
  ### 1 Usuário : Armazenar os dados cadastrais dos clientes, permitindo que eles façam login para realizar e visualizar compras, além de atualizar suas próprias informações. 
 
 Campos
@@ -396,18 +398,16 @@ Telas que utilizarão os endpoints
 
 
 
-=======
 Usuário: (Mariano)Armazenar os dados cadastrais dos clientes, permitindo que eles façam login para realizar e visualizar compras, além de atualizar suas próprias informações. 
 
 Pedido_Funko: (feliciano) Registrar os Funko Pops específicos que foram comprados por um usuário, permitindo a listagem por ID e o cancelamento/exclusão da compra.
 
 estoque: (Renato) sistema onde vai ficar estocados os produtos do site
 
-comentario:(comentario): sistema de criar comentarios em produdos e pedidos, para o cliente dar sua opinião
+comentario:(camila): sistema de criar comentarios em produdos e pedidos, para o cliente dar sua opinião
 
-pagamento:(carol): sistema de pagamento uma finalização da compra
+carrinho:(carol): sistema de pagamento uma finalização da compra
 
 Categorias: (Marco): categorai onde vai estar dividido os produtos 
->>>>>>> ddf3c10 (alterado o readme)
 
-
+Ana Carolina: criação do CRUD do carrinho de compras, visualizar os funkos comprados, excluir funko da compra, finalizar o pedido e exluir pedido
