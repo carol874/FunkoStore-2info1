@@ -15,6 +15,7 @@
     "api": "npx json-server db.json"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
     "axios": "^1.20.0",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",

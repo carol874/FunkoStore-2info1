@@ -1,4 +1,10 @@
 <script setup>
+</script>
+
+<template>
+  <main class="container py-5">
+    <h1>Bem-vindo à FunkoStore</h1>
+  </main>
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { adicionarAoCarrinho } from '@/services/carrinho';
